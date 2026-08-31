@@ -1,0 +1,2977 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mallik ERP — XAMPP to Nginx Migration — ArchWiki</title>
+  <meta name="description" content="Complete technical migration guide: XAMPP Apache + PHP bundle to a robust Nginx reverse proxy with Node.js / PKG executable, native MariaDB, and Memurai Redis." />
+  <style>
+    /* ============================================================
+       ArchWiki-inspired stylesheet
+       Light + Dark themes via data-theme attribute on <html>
+       ============================================================ */
+    :root[data-theme="light"] {
+      --bg:            #ffffff;
+      --bg-alt:        #f8f9fa;
+      --bg-sidebar:   #f8f9fa;
+      --bg-code:       #f8f8f8;
+      --bg-code-inline:#eef2f7;
+      --bg-hover:      #eaecf0;
+      --bg-pre:        #fbfaf9;
+      --bg-search:     #ffffff;
+      --bg-sticky:     #f8f9fa;
+
+      --text:          #202122;
+      --text-secondary:#54595d;
+      --text-muted:    #72777d;
+
+      --border:        #a2a9b1;
+      --border-light:  #c8ccd1;
+      --border-soft:   #eaecf0;
+
+      --link:          #3366cc;
+      --link-hover:    #447ff5;
+      --link-visited:  #795cb2;
+
+      --red:           #d33;
+      --red-bg:        #fee7e6;
+      --red-border:    #b32424;
+
+      --yellow:        #b78800;
+      --yellow-bg:     #fef6e7;
+      --yellow-border: #fc3;
+
+      --green:         #14866d;
+      --green-bg:      #d5fdf4;
+      --green-border:  #096;
+
+      --blue:          #3366cc;
+      --blue-bg:       #eaf3ff;
+      --blue-border:   #36c;
+
+      --purple:        #7c3aed;
+      --purple-bg:     #f5f3ff;
+      --purple-border: #9553d1;
+
+      --selection:     #d0e3ff;
+      --shadow:        0 1px 3px rgba(0,0,0,0.08);
+      --shadow-lg:     0 4px 16px rgba(0,0,0,0.18);
+
+      --accent-bar:    #08c;
+    }
+
+    :root[data-theme="dark"] {
+      --bg:            #1a1a1b;
+      --bg-alt:        #222426;
+      --bg-sidebar:   #1c1c1d;
+      --bg-code:       #2a2a2c;
+      --bg-code-inline:#333537;
+      --bg-hover:      #2e3032;
+      --bg-pre:        #1f1f20;
+      --bg-search:     #2a2a2c;
+      --bg-sticky:     #1c1c1d;
+
+      --text:          #e6e6e6;
+      --text-secondary:#b8b8b8;
+      --text-muted:    #888;
+
+      --border:        #444;
+      --border-light:  #383a3c;
+      --border-soft:   #2a2a2c;
+
+      --link:          #6cb0ff;
+      --link-hover:    #9bc7ff;
+      --link-visited:  #c79bff;
+
+      --red:           #ff6b6b;
+      --red-bg:        #3a1c1c;
+      --red-border:    #d33;
+
+      --yellow:        #ffd966;
+      --yellow-bg:     #3a3018;
+      --yellow-border: #fc3;
+
+      --green:         #5fd1a8;
+      --green-bg:      #1c3a30;
+      --green-border:  #096;
+
+      --blue:          #6cb0ff;
+      --blue-bg:       #1c2c4a;
+      --blue-border:   #36c;
+
+      --purple:        #c79bff;
+      --purple-bg:     #2a1c4a;
+      --purple-border: #9553d1;
+
+      --selection:     #1f4a8a;
+      --shadow:        0 1px 3px rgba(0,0,0,0.4);
+      --shadow-lg:     0 4px 16px rgba(0,0,0,0.6);
+
+      --accent-bar:    #08c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "DejaVu Sans", "Liberation Sans", "Noto Sans", sans-serif;
+      font-size: 14.5px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color .2s ease, color .2s ease;
+    }
+
+    ::selection { background: var(--selection); }
+
+    a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: color .12s ease, border-color .12s ease;
+    }
+    a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    a:visited { color: var(--link-visited); }
+
+    code, pre, kbd, samp {
+      font-family: "JetBrains Mono", "DejaVu Sans Mono", "Liberation Mono", "Menlo", "Consolas", monospace;
+    }
+
+    p code, li code, td code, th code, dd code {
+      background: var(--bg-code-inline);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.88em;
+      border: 1px solid var(--border-soft);
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    pre {
+      background: var(--bg-pre);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 14px 18px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.65;
+      margin: 12px 0;
+      position: relative;
+      color: var(--text);
+    }
+
+    pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+      color: inherit;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--bg-alt);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 3px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity .15s ease, background .15s ease;
+      font-family: inherit;
+    }
+    pre:hover .copy-btn { opacity: 1; }
+    .copy-btn:hover { background: var(--bg-hover); color: var(--text); }
+    .copy-btn.copied { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+
+    .c-comment { color: var(--text-muted); font-style: italic; }
+    .c-key     { color: var(--blue); }
+    .c-str     { color: var(--green); }
+    .c-num     { color: var(--purple); }
+
+    /* ====== READING PROGRESS BAR ====== */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0%;
+      background: var(--accent-bar);
+      z-index: 1000;
+      transition: width .1s ease;
+    }
+
+    /* ====== TOP BAR ====== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-sticky);
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 10px 22px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      border: none;
+      white-space: nowrap;
+    }
+    .brand:hover { color: var(--accent-bar); border: none; }
+    .brand-logo {
+      width: 28px; height: 28px;
+      background: var(--accent-bar);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .brand-divider {
+      color: var(--border);
+      font-weight: 300;
+    }
+    .brand-page {
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 14.5px;
+    }
+
+    /* ====== SEARCH BOX ====== */
+    .search-wrap {
+      flex: 1;
+      max-width: 540px;
+      position: relative;
+    }
+    .search-box {
+      width: 100%;
+      padding: 8px 14px 8px 36px;
+      background: var(--bg-search);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .search-box::placeholder { color: var(--text-muted); }
+    .search-box:focus {
+      outline: none;
+      border-color: var(--accent-bar);
+      box-shadow: inset 0 0 0 1px var(--accent-bar);
+    }
+    .search-icon {
+      position: absolute;
+      left: 11px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      font-size: 15px;
+    }
+    .search-kbd {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-alt);
+      border: 1px solid var(--border-light);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-family: monospace;
+      pointer-events: none;
+    }
+
+    /* ====== SEARCH RESULTS DROPDOWN ====== */
+    .search-results {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--bg-search);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: var(--shadow-lg);
+      max-height: 70vh;
+      overflow-y: auto;
+      display: none;
+      z-index: 200;
+    }
+    .search-results.open { display: block; }
+    .search-results-section {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      background: var(--bg-alt);
+      border-bottom: 1px solid var(--border-soft);
+      position: sticky;
+      top: 0;
+    }
+    .search-result-item {
+      display: block;
+      padding: 8px 14px;
+      color: var(--text);
+      border: none;
+      border-bottom: 1px solid var(--border-soft);
+      cursor: pointer;
+      transition: background .1s ease;
+    }
+    .search-result-item:hover,
+    .search-result-item.active {
+      background: var(--bg-hover);
+      border: none;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-title {
+      font-weight: 600;
+      font-size: 13.5px;
+      margin-bottom: 2px;
+    }
+    .search-result-snippet {
+      font-size: 12px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .search-result-item mark {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .search-empty {
+      padding: 18px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* ====== TOPBAR ACTIONS ====== */
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .icon-btn {
+      width: 34px; height: 34px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background .12s ease, color .12s ease;
+    }
+    .icon-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 1px;
+      padding: 0 22px;
+      background: var(--bg-sticky);
+      border-bottom: 1px solid var(--border-light);
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .tab {
+      padding: 7px 14px;
+      font-size: 13px;
+      color: var(--link);
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      background: transparent;
+      transition: background .12s ease;
+    }
+    .tab:hover { background: var(--bg-hover); border-bottom-color: var(--border); }
+    .tab.active { border-bottom-color: var(--accent-bar); color: var(--text); font-weight: 600; }
+
+    /* ====== LAYOUT ====== */
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr) 220px;
+      gap: 0;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* ====== SIDEBAR (LEFT) ====== */
+    .sidebar {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-light);
+      padding: 20px 0 40px;
+      position: sticky;
+      top: 96px;
+      align-self: start;
+      max-height: calc(100vh - 96px);
+      overflow-y: auto;
+    }
+    .sidebar h3 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      padding: 0 22px 6px;
+      margin-top: 16px;
+    }
+    .sidebar h3:first-child { margin-top: 0; }
+
+    .toc-link {
+      display: block;
+      padding: 5px 22px 5px 28px;
+      color: var(--link);
+      font-size: 13.5px;
+      border: none;
+      border-left: 3px solid transparent;
+      transition: background .1s ease, border-color .1s ease;
+      line-height: 1.4;
+    }
+    .toc-link:hover {
+      background: var(--bg-hover);
+      color: var(--link-hover);
+      border: none;
+      border-left: 3px solid var(--border);
+    }
+    .toc-link.active {
+      background: var(--bg-hover);
+      border-left-color: var(--accent-bar);
+      color: var(--text);
+      font-weight: 600;
+    }
+    .toc-link.sub { padding-left: 40px; font-size: 12.5px; color: var(--text-secondary); }
+    .toc-link.sub.subsub { padding-left: 52px; font-size: 12px; }
+    .toc-link.hidden { display: none; }
+
+    /* ====== MAIN CONTENT ====== */
+    .main {
+      padding: 28px 40px 80px;
+      min-width: 0;
+    }
+
+    .page-header {
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 14px;
+      margin-bottom: 24px;
+    }
+    .page-title {
+      font-size: 30px;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.25;
+      margin-bottom: 8px;
+      font-family: "Linux Libertine", "Georgia", "Times New Roman", serif;
+    }
+    .page-meta {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .page-meta span strong { color: var(--text-secondary); font-weight: 600; }
+
+    /* ====== HEADINGS ====== */
+    .main h2 {
+      font-size: 24px;
+      font-weight: 400;
+      font-family: "Linux Libertine", "Georgia", "Times New Roman", serif;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 6px;
+      margin-top: 36px;
+      margin-bottom: 14px;
+      color: var(--text);
+      scroll-margin-top: 100px;
+    }
+    .main h2 .mw-headline-number {
+      color: var(--text-muted);
+      font-weight: 300;
+      margin-right: 6px;
+    }
+    .main h3 {
+      font-size: 19px;
+      font-weight: 600;
+      font-family: "Linux Libertine", "Georgia", "Times New Roman", serif;
+      margin-top: 26px;
+      margin-bottom: 10px;
+      color: var(--text);
+      scroll-margin-top: 100px;
+    }
+    .main h4 {
+      font-size: 15.5px;
+      font-weight: 700;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .main p {
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .main p, .main li { font-size: 14.5px; }
+
+    .main ul, .main ol {
+      padding-left: 24px;
+      margin-bottom: 12px;
+    }
+    .main li { margin-bottom: 5px; }
+    .main li > ul, .main li > ol { margin-top: 5px; }
+
+    /* ====== CALLOUT BOXES (Arch Wiki style) ====== */
+    .callout {
+      border: 1px solid var(--border);
+      border-left-width: 4px;
+      background: var(--bg-alt);
+      padding: 10px 16px;
+      margin: 14px 0;
+      border-radius: 2px;
+      font-size: 14px;
+    }
+    .callout .callout-label {
+      font-weight: 700;
+      font-size: 13px;
+      margin-right: 6px;
+    }
+    .callout.note    { border-left-color: var(--blue-border);   background: var(--blue-bg); }
+    .callout.note    .callout-label { color: var(--blue); }
+    .callout.tip     { border-left-color: var(--green-border);  background: var(--green-bg); }
+    .callout.tip     .callout-label { color: var(--green); }
+    .callout.warning { border-left-color: var(--yellow-border); background: var(--yellow-bg); }
+    .callout.warning .callout-label { color: var(--yellow); }
+    .callout.important { border-left-color: var(--red-border);  background: var(--red-bg); }
+    .callout.important .callout-label { color: var(--red); }
+
+    /* ====== TABLES ====== */
+    .wiki-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 13.5px;
+      background: var(--bg);
+    }
+    .wiki-table th, .wiki-table td {
+      border: 1px solid var(--border-light);
+      padding: 8px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    .wiki-table th {
+      background: var(--bg-alt);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .wiki-table tr:nth-child(even) td { background: var(--bg-alt); }
+    .wiki-table caption {
+      caption-side: top;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      font-style: italic;
+      padding-bottom: 4px;
+      text-align: left;
+    }
+    .wiki-table.wide { font-size: 13px; }
+    .wiki-table.monospace td, .wiki-table.monospace th { font-family: monospace; font-size: 12.5px; }
+
+    .file-path { font-family: monospace; font-size: 12.5px; color: var(--accent-bar); word-break: break-all; }
+    .code-val {
+      font-family: monospace;
+      font-size: 12.5px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      display: inline-block;
+      word-break: break-all;
+    }
+    .code-val.old  { background: var(--red-bg);    color: var(--red);    border: 1px solid var(--red-border); }
+    .code-val.new  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); }
+    .code-val.keep { background: var(--bg-alt);    color: var(--text-secondary); border: 1px solid var(--border-light); }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .status-badge.done { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .status-badge.todo { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+
+    /* ====== ARCH DIAGRAMS ====== */
+    .arch-diagram {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin: 18px 0;
+    }
+    .arch-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px 18px;
+    }
+    .arch-card.old { border-top: 4px solid var(--red); }
+    .arch-card.new { border-top: 4px solid var(--green); }
+
+    .arch-card h4 {
+      margin-top: 0;
+      margin-bottom: 4px;
+      font-size: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .arch-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 2px;
+    }
+    .arch-tag.old { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+    .arch-tag.new { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+
+    .flow-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .flow-node {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--bg-alt);
+      border: 1px solid var(--border-soft);
+      border-radius: 3px;
+    }
+    .flow-node.hl-red    { background: var(--red-bg);    border-color: var(--red-border); }
+    .flow-node.hl-green  { background: var(--green-bg);  border-color: var(--green-border); }
+    .flow-node.hl-blue   { background: var(--blue-bg);   border-color: var(--blue-border); }
+    .flow-node.hl-purple { background: var(--purple-bg); border-color: var(--purple-border); }
+    .flow-icon { font-size: 16px; width: 22px; text-align: center; }
+    .flow-info strong { display: block; font-size: 13px; color: var(--text); }
+    .flow-info span { font-size: 11.5px; color: var(--text-muted); }
+    .flow-arrow {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1;
+      padding: 2px 0;
+    }
+
+    /* ====== SVG DIAGRAM CONTAINER ====== */
+    .svg-diagram {
+      background: var(--bg);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 18px;
+      margin: 16px 0;
+      overflow-x: auto;
+    }
+    .svg-diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+    .svg-caption {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    /* ====== FILE TREE ====== */
+    .file-tree {
+      background: var(--bg-pre);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 14px 18px;
+      font-family: monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--text);
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    .file-tree .dir { color: var(--blue); font-weight: 700; }
+    .file-tree .file { color: var(--text); }
+    .file-tree .comment { color: var(--text-muted); font-style: italic; }
+    .file-tree .highlight { background: var(--yellow-bg); color: var(--yellow); padding: 0 4px; border-radius: 2px; }
+
+    /* ====== CONTENT RIGHT SIDEBAR (TOC mini) ====== */
+    .right-rail {
+      border-left: 1px solid var(--border-light);
+      padding: 28px 18px;
+      position: sticky;
+      top: 96px;
+      align-self: start;
+      max-height: calc(100vh - 96px);
+      overflow-y: auto;
+      font-size: 12.5px;
+    }
+    .right-rail h5 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .right-rail .toc a {
+      display: block;
+      padding: 3px 0 3px 10px;
+      border-left: 2px solid var(--border-light);
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      border-bottom: none;
+    }
+    .right-rail .toc a:hover { color: var(--link); border-bottom: none; }
+    .right-rail .toc a.active { color: var(--accent-bar); border-left-color: var(--accent-bar); font-weight: 600; }
+    .right-rail .toc a.sub { padding-left: 22px; font-size: 11.5px; }
+
+    /* ====== RELATED BOX ====== */
+    .related-box {
+      background: var(--bg-alt);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 12px 14px;
+      margin-top: 18px;
+      font-size: 12.5px;
+    }
+    .related-box h6 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .related-box ul { padding-left: 18px; margin: 0; }
+    .related-box li { margin-bottom: 3px; }
+
+    /* ====== INFOBOX (right float) ====== */
+    .infobox {
+      float: right;
+      width: 280px;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 0 0 14px 22px;
+      font-size: 12.5px;
+      overflow: hidden;
+    }
+    .infobox-title {
+      background: var(--accent-bar);
+      color: #fff;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 13.5px;
+      text-align: center;
+    }
+    .infobox-img {
+      background: var(--bg);
+      padding: 14px;
+      text-align: center;
+      font-size: 50px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .infobox table { width: 100%; border-collapse: collapse; }
+    .infobox th, .infobox td {
+      padding: 5px 10px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border-soft);
+      vertical-align: top;
+    }
+    .infobox th { background: var(--bg-alt); color: var(--text-secondary); text-align: left; width: 40%; font-weight: 600; }
+
+    /* ====== MISC ====== */
+    .pill {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+      background: var(--bg-alt);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+    }
+    .pill.blue   { background: var(--blue-bg);   color: var(--blue);   border-color: var(--blue-border); }
+    .pill.green  { background: var(--green-bg);  color: var(--green);  border-color: var(--green-border); }
+    .pill.red    { background: var(--red-bg);    color: var(--red);    border-color: var(--red-border); }
+    .pill.yellow { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow-border); }
+    .pill.purple { background: var(--purple-bg); color: var(--purple); border-color: var(--purple-border); }
+
+    .kbd {
+      font-family: monospace;
+      background: var(--bg-alt);
+      border: 1px solid var(--border-light);
+      border-bottom-width: 2px;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    /* ====== BACK TO TOP ====== */
+    #back-to-top {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      width: 40px; height: 40px;
+      background: var(--bg-sticky);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, background .15s ease, color .15s ease;
+      z-index: 90;
+    }
+    #back-to-top.visible { opacity: 1; pointer-events: auto; }
+    #back-to-top:hover { background: var(--accent-bar); color: #fff; }
+
+    /* ====== FOOTER ====== */
+    .footer {
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-alt);
+      padding: 20px 40px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .footer a { color: var(--link); border-bottom: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ====== SECTION WRAP ====== */
+    .section-wrap { scroll-margin-top: 100px; }
+
+    /* ====== MOBILE TOGGLE ====== */
+    .mobile-only { display: none; }
+    #sidebar-toggle {
+      display: none;
+    }
+
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 1200px) {
+      .layout { grid-template-columns: 260px minmax(0, 1fr); }
+      .right-rail { display: none; }
+    }
+    @media (max-width: 880px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        width: 280px;
+        height: 100vh;
+        max-height: 100vh;
+        z-index: 200;
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        padding-top: 60px;
+      }
+      .sidebar.open { transform: translateX(0); }
+      #sidebar-toggle { display: flex; }
+      .mobile-only { display: block; }
+      .infobox { float: none; width: 100%; margin: 0 0 14px 0; }
+      .arch-diagram { grid-template-columns: 1fr; }
+      .main { padding: 20px 18px 60px; }
+      .topbar-inner { padding: 8px 14px; gap: 10px; }
+      .brand-page { display: none; }
+      .search-kbd { display: none; }
+      .tabs { padding: 0 14px; }
+      .footer { padding: 16px; }
+    }
+
+    /* overlay for sidebar on mobile */
+    #sidebar-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 150;
+      display: none;
+    }
+    #sidebar-overlay.open { display: block; }
+
+    /* Highlighted search target */
+    .search-target-highlight {
+      animation: highlight-flash 2s ease;
+    }
+    @keyframes highlight-flash {
+      0%   { background: var(--yellow-bg); }
+      100% { background: transparent; }
+    }
+
+    /* Print styles */
+    @media print {
+      .topbar, .sidebar, .right-rail, .tabs, #back-to-top, #progress-bar, #sidebar-overlay, .copy-btn, #sidebar-toggle { display: none !important; }
+      .layout { grid-template-columns: 1fr; }
+      .main { padding: 0; }
+      body { font-size: 11px; }
+      pre, .wiki-table { page-break-inside: avoid; }
+      a { color: black; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- ===================== TOPBAR ===================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <button id="sidebar-toggle" class="icon-btn" aria-label="Toggle sidebar" title="Toggle sidebar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <a href="#top" class="brand">
+      <div class="brand-logo">M</div>
+      <span>ArchWiki</span>
+      <span class="brand-divider">/</span>
+      <span class="brand-page">Mallik ERP — XAMPP to Nginx Migration</span>
+    </a>
+
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </span>
+      <input id="search-input" class="search-box" type="text" placeholder="Search the wiki… (press / to focus)" autocomplete="off" spellcheck="false" />
+      <span class="search-kbd">/</span>
+      <div id="search-results" class="search-results"></div>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="theme-toggle" class="icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+        <svg id="icon-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+        <svg id="icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button id="print-btn" class="icon-btn" title="Print article" aria-label="Print article">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      </button>
+      <button id="edit-btn" class="icon-btn" title="View source" aria-label="View source">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active">Article</button>
+    <button class="tab">Talk</button>
+    <span style="flex:1"></span>
+    <button class="tab">Read</button>
+    <button class="tab">View source</button>
+    <button class="tab">View history</button>
+  </div>
+</header>
+
+<div id="sidebar-overlay"></div>
+
+<!-- ===================== LAYOUT ===================== -->
+<div class="layout">
+
+  <!-- ============== SIDEBAR (TOC) ============== -->
+  <aside class="sidebar" id="sidebar">
+    <h3>Contents</h3>
+    <a href="#top" class="toc-link active" data-section="top">Top of article</a>
+    <a href="#overview" class="toc-link" data-section="overview">1. Overview</a>
+    <a href="#overview-context" class="toc-link sub" data-section="overview-context">1.1 Context &amp; rationale</a>
+    <a href="#overview-scope" class="toc-link sub" data-section="overview-scope">1.2 Migration scope</a>
+    <a href="#overview-ports" class="toc-link sub" data-section="overview-ports">1.3 Port matrix</a>
+
+    <h3>Architecture</h3>
+    <a href="#architecture" class="toc-link" data-section="architecture">2. Architecture comparison</a>
+    <a href="#arch-old" class="toc-link sub" data-section="arch-old">2.1 Old XAMPP stack</a>
+    <a href="#arch-new" class="toc-link sub" data-section="arch-new">2.2 New Nginx stack</a>
+    <a href="#arch-request-flow" class="toc-link sub" data-section="arch-request-flow">2.3 Request flow diagram</a>
+    <a href="#arch-diff-summary" class="toc-link sub" data-section="arch-diff-summary">2.4 Diff summary</a>
+
+    <h3>Configuration</h3>
+    <a href="#ip-config" class="toc-link" data-section="ip-config">3. IP configuration</a>
+    <a href="#ip-update" class="toc-link sub" data-section="ip-update">3.1 Settings to update</a>
+    <a href="#ip-keep" class="toc-link sub" data-section="ip-keep">3.2 Settings that must stay 127.0.0.1</a>
+    <a href="#backend-changes" class="toc-link" data-section="backend-changes">4. Backend changes</a>
+    <a href="#backend-pkg" class="toc-link sub" data-section="backend-pkg">4.1 PKG compilation</a>
+    <a href="#backend-trust-proxy" class="toc-link sub" data-section="backend-trust-proxy">4.2 trust proxy</a>
+    <a href="#backend-socket-cors" class="toc-link sub" data-section="backend-socket-cors">4.3 Socket CORS</a>
+    <a href="#frontend-changes" class="toc-link" data-section="frontend-changes">5. Frontend changes</a>
+    <a href="#frontend-env" class="toc-link sub" data-section="frontend-env">5.1 Environment variables</a>
+    <a href="#frontend-homepage" class="toc-link sub" data-section="frontend-homepage">5.2 homepage &amp; basename</a>
+    <a href="#nginx-config" class="toc-link" data-section="nginx-config">6. Nginx configuration</a>
+    <a href="#nginx-standard" class="toc-link sub" data-section="nginx-standard">6.1 Standard config</a>
+    <a href="#nginx-exe" class="toc-link sub" data-section="nginx-exe">6.2 Executable deployment</a>
+    <a href="#nginx-directives" class="toc-link sub" data-section="nginx-directives">6.3 Directive reference</a>
+
+    <h3>Deployment</h3>
+    <a href="#deployment" class="toc-link" data-section="deployment">7. Step-by-step deployment</a>
+    <a href="#deploy-prereq" class="toc-link sub" data-section="deploy-prereq">7.1 Prerequisites</a>
+    <a href="#deploy-backend" class="toc-link sub" data-section="deploy-backend">7.2 Backend packaging</a>
+    <a href="#deploy-frontend" class="toc-link sub" data-section="deploy-frontend">7.3 Frontend build</a>
+    <a href="#deploy-nginx" class="toc-link sub" data-section="deploy-nginx">7.4 Nginx setup</a>
+    <a href="#deploy-firewall" class="toc-link sub" data-section="deploy-firewall">7.5 Firewall</a>
+    <a href="#deploy-services" class="toc-link sub" data-section="deploy-services">7.6 Auto-start services</a>
+    <a href="#deploy-verify" class="toc-link sub" data-section="deploy-verify">7.7 Verification</a>
+    <a href="#subpath" class="toc-link" data-section="subpath">8. Subpath deployment</a>
+
+    <h3>Operations</h3>
+    <a href="#troubleshooting" class="toc-link" data-section="troubleshooting">9. Troubleshooting</a>
+    <a href="#security" class="toc-link" data-section="security">10. Security hardening</a>
+    <a href="#performance" class="toc-link" data-section="performance">11. Performance tuning</a>
+    <a href="#faq" class="toc-link" data-section="faq">12. FAQ</a>
+    <a href="#see-also" class="toc-link" data-section="see-also">See also</a>
+  </aside>
+
+  <!-- ============== MAIN CONTENT ============== -->
+  <main class="main" id="top">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <h1 class="page-title">Mallik ERP — XAMPP to Nginx Migration</h1>
+      <div class="page-meta">
+        <span><strong>From</strong> ArchWiki — Mallik ERP</span>
+        <span><strong>Last revision:</strong> 2026-08-31</span>
+        <span><strong>Status:</strong> <span class="status-badge done">Verified &amp; Operational</span></span>
+        <span><strong>Difficulty:</strong> Intermediate → Advanced</span>
+      </div>
+    </div>
+
+    <!-- INFOBOX -->
+    <aside class="infobox">
+      <div class="infobox-title">Migration Snapshot</div>
+      <div class="infobox-img">⚡</div>
+      <table>
+        <tr><th>Old stack</th><td>XAMPP (Apache + PHP + MySQL)</td></tr>
+        <tr><th>New stack</th><td>Nginx + Node.js / <code>server.exe</code></td></tr>
+        <tr><th>Database</th><td>Native MariaDB (port 3306)</td></tr>
+        <tr><th>Cache</th><td>Memurai Redis (port 6379)</td></tr>
+        <tr><th>Entry port</th><td>80 (HTTP)</td></tr>
+        <tr><th>Backend bind</th><td><code>127.0.0.1:8000</code></td></tr>
+        <tr><th>Subpath</th><td><code>/MallikEngineering/</code></td></tr>
+        <tr><th>OS target</th><td>Windows Server (on-prem)</td></tr>
+      </table>
+    </aside>
+
+    <!-- ============================================================
+         SECTION 1 — OVERVIEW
+         ============================================================ -->
+    <section id="overview" class="section-wrap">
+      <h2><span class="mw-headline-number">1</span> Overview</h2>
+
+      <p>The Mallik ERP infrastructure migrates from an unproxied <strong>XAMPP Apache + PHP</strong> bundle to a robust <strong>Nginx reverse proxy</strong> fronting a Node.js / compiled Windows executable (<code>server.exe</code>), backed by native MariaDB and Memurai Redis. The migration consolidates four independent concerns — web serving, API gateway, database, and cache — into cleanly separated Windows services with a single ingress port exposed to the LAN.</p>
+
+      <p>This guide documents every change required across the stack: code modifications, environment variable updates, Nginx configuration, PKG executable packaging, Windows service installation via NSSM, and end-to-end verification. It is written for on-premises Windows Server deployments and includes static-IP replacement rules, subpath deployment notes (<code>/MallikEngineering/</code>), troubleshooting playbooks, and security hardening recommendations.</p>
+
+      <h3 id="overview-context"><span class="mw-headline-number">1.1</span> Context &amp; rationale</h3>
+      <p>The original XAMPP-based deployment had three structural problems that made it unsuitable for production rollout. <strong>First</strong>, XAMPP bundles Apache, MySQL, PHP, and Perl into a single monolithic process tree — there is no clean way to restart just the database without bouncing Apache, no way to upgrade PHP without re-testing the entire bundle, and no isolation between web-server and database failures. <strong>Second</strong>, the Node.js API was bound to <code>0.0.0.0:8000</code> and exposed directly to the LAN, bypassing any TLS termination, rate limiting, or access logging at the network edge. <strong>Third</strong>, the database was tied to the XAMPP process lifecycle — when XAMPP crashed, the database crashed with it, and recovery required manual intervention.</p>
+
+      <p>The new architecture decouples these concerns. Nginx becomes the single network ingress on port 80, proxying API and WebSocket traffic to a backend bound strictly to the loopback interface. MariaDB and Memurai run as independent Windows services with their own restart policies, so a database crash no longer takes the web tier down. The Node.js backend is compiled into a standalone <code>server.exe</code> via <a href="https://github.com/vercel/pkg" target="_blank" rel="noopener"><code>pkg</code></a>, eliminating the Node.js runtime dependency on the production server and reducing the attack surface.</p>
+
+      <div class="callout note">
+        <span class="callout-label">Note:</span>
+        The compiled <code>server.exe</code> still reads a plaintext <code>.env</code> file placed alongside it on disk. Treat the <code>.env</code> file as a secret — restrict NTFS permissions to the service account only and exclude it from version control.
+      </div>
+
+      <h3 id="overview-scope"><span class="mw-headline-number">1.2</span> Migration scope</h3>
+      <p>The migration touches every layer of the application stack. The table below summarises the high-level scope; subsequent sections document each item in detail.</p>
+
+      <table class="wiki-table">
+        <caption>Table 1.1 — Migration scope by component</caption>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Old (XAMPP)</th>
+            <th>New (Nginx stack)</th>
+            <th>Migration effort</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Web server</strong></td>
+            <td>XAMPP Apache on port 80</td>
+            <td>Nginx reverse proxy on port 80</td>
+            <td><span class="pill yellow">Medium</span> — full config rewrite</td>
+          </tr>
+          <tr>
+            <td><strong>API runtime</strong></td>
+            <td>Node.js exposed on <code>0.0.0.0:8000</code></td>
+            <td><code>server.exe</code> bound to <code>127.0.0.1:8000</code></td>
+            <td><span class="pill green">Low</span> — <code>pkg</code> compilation</td>
+          </tr>
+          <tr>
+            <td><strong>Frontend</strong></td>
+            <td>React served by Apache from <code>htdocs/</code></td>
+            <td>React served by Nginx from <code>build/</code> via <code>alias</code></td>
+            <td><span class="pill green">Low</span> — env + homepage tweak</td>
+          </tr>
+          <tr>
+            <td><strong>Database</strong></td>
+            <td>XAMPP MySQL on port 3306</td>
+            <td>Native MariaDB on port 3306 (or 3307)</td>
+            <td><span class="pill yellow">Medium</span> — schema re-import</td>
+          </tr>
+          <tr>
+            <td><strong>Cache</strong></td>
+            <td>None</td>
+            <td>Memurai Redis on port 6379</td>
+            <td><span class="pill green">Low</span> — service install</td>
+          </tr>
+          <tr>
+            <td><strong>WebSocket</strong></td>
+            <td>Socket.io on Node port 8000 directly</td>
+            <td>Socket.io via Nginx <code>/socket.io/</code> proxy</td>
+            <td><span class="pill green">Low</span> — proxy block</td>
+          </tr>
+          <tr>
+            <td><strong>Service mgmt</strong></td>
+            <td>XAMPP Control Panel (manual)</td>
+            <td>NSSM Windows Services (auto-start)</td>
+            <td><span class="pill green">Low</span> — two <code>nssm install</code> commands</td>
+          </tr>
+          <tr>
+            <td><strong>Firewall</strong></td>
+            <td>Multiple ports exposed (80, 8000, 3306)</td>
+            <td>Only port 80 exposed; backend on loopback</td>
+            <td><span class="pill green">Low</span> — one PowerShell rule</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="overview-ports"><span class="mw-headline-number">1.3</span> Port matrix</h3>
+      <p>Understanding the port topology is critical before firewall configuration. The matrix below shows which ports are exposed externally versus which are bound to the loopback interface.</p>
+
+      <table class="wiki-table">
+        <caption>Table 1.2 — Port allocation matrix</caption>
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Bound to</th>
+            <th>External access</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>80</strong></td>
+            <td>Nginx</td>
+            <td><code>0.0.0.0</code> (all interfaces)</td>
+            <td><span class="pill green">Yes</span> — LAN clients</td>
+            <td>HTTP ingress, TLS-ready</td>
+          </tr>
+          <tr>
+            <td><strong>8000</strong></td>
+            <td><code>server.exe</code> (Node.js / Express)</td>
+            <td><code>127.0.0.1</code></td>
+            <td><span class="pill red">No</span> — loopback only</td>
+            <td>API + Socket.io</td>
+          </tr>
+          <tr>
+            <td><strong>3306</strong></td>
+            <td>MariaDB</td>
+            <td><code>127.0.0.1</code> (or LAN if separate DB host)</td>
+            <td><span class="pill red">No</span> (loopback) / <span class="pill yellow">Yes</span> (if remote DB)</td>
+            <td>Database</td>
+          </tr>
+          <tr>
+            <td><strong>6379</strong></td>
+            <td>Memurai Redis</td>
+            <td><code>127.0.0.1</code></td>
+            <td><span class="pill red">No</span> — loopback only</td>
+            <td>Cache + session store</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="callout-label">Warning:</span>
+        Never bind the backend service to <code>0.0.0.0</code> in the new architecture. Doing so would re-introduce the direct LAN exposure that this migration is specifically designed to eliminate. The only externally exposed port should be <strong>80</strong> (and optionally <strong>443</strong> once TLS is added).
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 2 — ARCHITECTURE
+         ============================================================ -->
+    <section id="architecture" class="section-wrap">
+      <h2><span class="mw-headline-number">2</span> Architecture comparison</h2>
+
+      <p>The system transitions from an unproxied XAMPP Apache + PHP bundle to a robust Nginx Reverse Proxy with Node.js / Compiled Executable (<code>server.exe</code>), native MariaDB, and Memurai Redis. The diagram below shows the side-by-side topology before and after migration.</p>
+
+      <div class="arch-diagram">
+        <!-- OLD XAMPP -->
+        <div class="arch-card old" id="arch-old">
+          <h4>
+            Old XAMPP Architecture
+            <span class="arch-tag old">Monolithic Bundle</span>
+          </h4>
+          <div class="flow-list">
+            <div class="flow-node">
+              <div class="flow-icon">🌐</div>
+              <div class="flow-info"><strong>Client Browser</strong><span>Direct port connection on LAN</span></div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node hl-red">
+              <div class="flow-icon">📦</div>
+              <div class="flow-info"><strong>XAMPP Apache (Port 80)</strong><span>Serves PHP &amp; static React build</span></div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node hl-red">
+              <div class="flow-icon">🟢</div>
+              <div class="flow-info"><strong>Node.js API (Port 8000)</strong><span>Exposed directly to network (<code>0.0.0.0</code>)</span></div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node hl-red">
+              <div class="flow-icon">🗄️</div>
+              <div class="flow-info"><strong>XAMPP MySQL (Port 3306)</strong><span>Database tied to XAMPP process lifecycle</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NEW NGINX -->
+        <div class="arch-card new" id="arch-new">
+          <h4>
+            New Nginx Proxy Architecture
+            <span class="arch-tag new">Separated Services</span>
+          </h4>
+          <div class="flow-list">
+            <div class="flow-node">
+              <div class="flow-icon">🌐</div>
+              <div class="flow-info"><strong>Client Browser</strong><span>Connects ONLY to Port 80</span></div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node hl-blue">
+              <div class="flow-icon">⚡</div>
+              <div class="flow-info"><strong>Nginx Reverse Proxy (Port 80)</strong><span>Routes <code>/</code> to Frontend &amp; <code>/api/</code> to Backend</span></div>
+            </div>
+            <div class="flow-arrow">↓ Internal proxies ↓</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="flow-node hl-green" style="padding:8px;">
+                <div class="flow-info"><strong>React (<code>/</code>)</strong><span>Static <code>/build</code></span></div>
+              </div>
+              <div class="flow-node hl-green" style="padding:8px;">
+                <div class="flow-info"><strong>Backend Exec (<code>/api/</code>)</strong><span><code>server.exe</code> @ 127.0.0.1:8000</span></div>
+              </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node hl-green">
+              <div class="flow-icon">🗄️</div>
+              <div class="flow-info"><strong>MariaDB (3306) + Memurai Redis (6379)</strong><span>Independent Windows Services</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 id="arch-request-flow"><span class="mw-headline-number">2.1</span> Request flow diagram</h3>
+      <p>The SVG diagram below shows the full lifecycle of a single HTTP request, from the LAN client through Nginx routing, backend dispatch, database/cache interaction, and the return path. Solid arrows are synchronous HTTP calls; dashed arrows are cache/database lookups.</p>
+
+      <div class="svg-diagram">
+        <svg viewBox="0 0 900 520" width="900" height="520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Request flow diagram">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#54595d"/>
+            </marker>
+            <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#14866d"/>
+            </marker>
+            <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#d33"/>
+            </marker>
+          </defs>
+
+          <!-- Title -->
+          <text x="450" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#202122">HTTP Request Lifecycle — Nginx Stack</text>
+
+          <!-- Client -->
+          <rect x="20" y="240" width="120" height="60" rx="6" fill="#eaf3ff" stroke="#3366cc" stroke-width="1.5"/>
+          <text x="80" y="265" text-anchor="middle" font-size="12" font-weight="700" fill="#202122">LAN Client</text>
+          <text x="80" y="282" text-anchor="middle" font-size="10" fill="#54595d">Browser / Postman</text>
+
+          <!-- Nginx -->
+          <rect x="220" y="220" width="160" height="100" rx="6" fill="#fef6e7" stroke="#fc3" stroke-width="2"/>
+          <text x="300" y="245" text-anchor="middle" font-size="13" font-weight="700" fill="#202122">Nginx :80</text>
+          <text x="300" y="263" text-anchor="middle" font-size="10" fill="#54595d">Reverse Proxy</text>
+          <text x="300" y="285" text-anchor="middle" font-size="9" fill="#54595d">/ → static build/</text>
+          <text x="300" y="298" text-anchor="middle" font-size="9" fill="#54595d">/api/ → 127.0.0.1:8000</text>
+          <text x="300" y="311" text-anchor="middle" font-size="9" fill="#54595d">/socket.io/ → upgrade</text>
+
+          <!-- Backend -->
+          <rect x="460" y="220" width="160" height="100" rx="6" fill="#d5fdf4" stroke="#096" stroke-width="2"/>
+          <text x="540" y="245" text-anchor="middle" font-size="13" font-weight="700" fill="#202122">server.exe</text>
+          <text x="540" y="263" text-anchor="middle" font-size="10" fill="#54595d">127.0.0.1:8000</text>
+          <text x="540" y="285" text-anchor="middle" font-size="9" fill="#54595d">Express + Socket.io</text>
+          <text x="540" y="298" text-anchor="middle" font-size="9" fill="#54595d">trust proxy = 1</text>
+          <text x="540" y="311" text-anchor="middle" font-size="9" fill="#54595d">.env (sibling)</text>
+
+          <!-- MariaDB -->
+          <rect x="700" y="100" width="160" height="80" rx="6" fill="#f8f8f8" stroke="#a2a9b1" stroke-width="1.5"/>
+          <text x="780" y="125" text-anchor="middle" font-size="13" font-weight="700" fill="#202122">MariaDB</text>
+          <text x="780" y="143" text-anchor="middle" font-size="10" fill="#54595d">127.0.0.1:3306</text>
+          <text x="780" y="160" text-anchor="middle" font-size="9" fill="#54595d">server_mallik schema</text>
+
+          <!-- Redis -->
+          <rect x="700" y="360" width="160" height="80" rx="6" fill="#f8f8f8" stroke="#a2a9b1" stroke-width="1.5"/>
+          <text x="780" y="385" text-anchor="middle" font-size="13" font-weight="700" fill="#202122">Memurai Redis</text>
+          <text x="780" y="403" text-anchor="middle" font-size="10" fill="#54595d">127.0.0.1:6379</text>
+          <text x="780" y="420" text-anchor="middle" font-size="9" fill="#54595d">Cache + sessions</text>
+
+          <!-- React build (static) -->
+          <rect x="220" y="80" width="160" height="70" rx="6" fill="#f5f3ff" stroke="#9553d1" stroke-width="1.5"/>
+          <text x="300" y="105" text-anchor="middle" font-size="12" font-weight="700" fill="#202122">React build/</text>
+          <text x="300" y="122" text-anchor="middle" font-size="10" fill="#54595d">Static SPA</text>
+          <text x="300" y="138" text-anchor="middle" font-size="9" fill="#54595d">index.html + assets</text>
+
+          <!-- Arrows: client -> nginx -->
+          <line x1="140" y1="270" x2="220" y2="270" stroke="#54595d" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="180" y="262" text-anchor="middle" font-size="9" fill="#54595d">HTTP</text>
+
+          <!-- nginx -> react (static, dashed) -->
+          <path d="M 280 220 Q 280 160 280 150" stroke="#9553d1" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrow)"/>
+          <text x="265" y="195" text-anchor="end" font-size="9" fill="#9553d1">static</text>
+
+          <!-- nginx -> backend -->
+          <line x1="380" y1="270" x2="460" y2="270" stroke="#54595d" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="420" y="262" text-anchor="middle" font-size="9" fill="#54595d">proxy_pass</text>
+
+          <!-- backend -> mariadb -->
+          <path d="M 620 240 Q 660 180 700 150" stroke="#14866d" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrow-green)"/>
+          <text x="675" y="190" font-size="9" fill="#14866d">SQL</text>
+
+          <!-- backend -> redis -->
+          <path d="M 620 300 Q 660 350 700 390" stroke="#14866d" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrow-green)"/>
+          <text x="675" y="350" font-size="9" fill="#14866d">GET/SET</text>
+
+          <!-- Return path labels -->
+          <text x="420" y="320" text-anchor="middle" font-size="9" fill="#d33" font-style="italic">← JSON response</text>
+          <text x="180" y="320" text-anchor="middle" font-size="9" fill="#d33" font-style="italic">← rendered page</text>
+
+          <!-- Legend -->
+          <g transform="translate(20, 440)">
+            <text x="0" y="0" font-size="11" font-weight="700" fill="#202122">Legend</text>
+            <line x1="0" y1="20" x2="40" y2="20" stroke="#54595d" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <text x="48" y="24" font-size="10" fill="#54595d">HTTP / proxy_pass (sync)</text>
+            <line x1="200" y1="20" x2="240" y2="20" stroke="#14866d" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-green)"/>
+            <text x="248" y="24" font-size="10" fill="#54595d">DB / cache lookup (async)</text>
+            <line x1="420" y1="20" x2="460" y2="20" stroke="#d33" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="468" y="24" font-size="10" fill="#54595d">Response path</text>
+          </g>
+
+          <!-- Port labels on edges -->
+          <text x="160" y="288" text-anchor="middle" font-size="9" fill="#72777d">:80</text>
+          <text x="420" y="288" text-anchor="middle" font-size="9" fill="#72777d">:8000 (loopback)</text>
+        </svg>
+        <div class="svg-caption">Figure 2.1 — Request flow through the new Nginx stack. Only port 80 is reachable from LAN clients; all upstream calls travel over the loopback interface.</div>
+      </div>
+
+      <h3 id="arch-diff-summary"><span class="mw-headline-number">2.2</span> Diff summary (old → new)</h3>
+      <p>The following table summarises the top-level architectural deltas. Each row corresponds to a detailed change documented in later sections.</p>
+
+      <table class="wiki-table">
+        <caption>Table 2.1 — Architecture diff summary</caption>
+        <thead>
+          <tr><th>Dimension</th><th>Old (XAMPP)</th><th>New (Nginx)</th><th>Section</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Ingress</td><td>Apache, port 80</td><td>Nginx, port 80</td><td><a href="#nginx-config">§6</a></td></tr>
+          <tr><td>Backend binding</td><td><code>0.0.0.0:8000</code></td><td><code>127.0.0.1:8000</code></td><td><a href="#backend-changes">§4</a></td></tr>
+          <tr><td>Backend artefact</td><td><code>node server.js</code></td><td><code>server.exe</code> (via pkg)</td><td><a href="#backend-pkg">§4.1</a></td></tr>
+          <tr><td>Database</td><td>XAMPP MySQL</td><td>Native MariaDB</td><td><a href="#deploy-prereq">§7.1</a></td></tr>
+          <tr><td>Cache</td><td>None</td><td>Memurai Redis</td><td><a href="#deploy-prereq">§7.1</a></td></tr>
+          <tr><td>Frontend URL</td><td>Hard-coded IP</td><td>Relative <code>/api/</code></td><td><a href="#frontend-changes">§5</a></td></tr>
+          <tr><td>Service mgmt</td><td>Manual (XAMPP CP)</td><td>NSSM Windows Services</td><td><a href="#deploy-services">§7.6</a></td></tr>
+          <tr><td>Subpath</td><td>n/a</td><td><code>/MallikEngineering/</code></td><td><a href="#subpath">§8</a></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============================================================
+         SECTION 3 — IP CONFIGURATION
+         ============================================================ -->
+    <section id="ip-config" class="section-wrap">
+      <h2><span class="mw-headline-number">3</span> IP configuration</h2>
+
+      <p>When deploying to any on-premises client server, replace <code>&lt;SERVER_LAN_IP&gt;</code> with the client's actual static IP address (for example, <code>192.168.1.15</code>). Below is the breakdown of IPs to change versus IPs that <strong>must</strong> remain <code>127.0.0.1</code> / <code>localhost</code>. Getting this distinction wrong is the single most common deployment failure, so it is worth reading carefully.</p>
+
+      <p>The principle is simple: <strong>anything the client browser needs to talk to uses the LAN IP; anything one server-side component needs to talk to another server-side component on the same box uses <code>127.0.0.1</code></strong>. This keeps loopback traffic off the network and prevents the backend from being directly addressable by other machines.</p>
+
+      <h3 id="ip-update"><span class="mw-headline-number">3.1</span> Settings to update to client static IP</h3>
+      <p>These are the four settings that change per deployment. They govern how the outside world addresses the server and how the backend advertises itself.</p>
+
+      <table class="wiki-table">
+        <caption>Table 3.1 — Settings that must change per client server</caption>
+        <thead>
+          <tr><th>Component</th><th>File path</th><th>Setting</th><th>Value to set</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Nginx</strong></td>
+            <td><span class="file-path">conf/nginx.conf</span></td>
+            <td><code>server_name</code></td>
+            <td><span class="code-val new">server_name 192.168.1.15 localhost;</span></td>
+          </tr>
+          <tr>
+            <td><strong>Backend .env</strong></td>
+            <td><span class="file-path">app/.env</span></td>
+            <td><code>APP_URL</code></td>
+            <td><span class="code-val new">APP_URL = http://192.168.1.15</span></td>
+          </tr>
+          <tr>
+            <td><strong>Backend Socket</strong></td>
+            <td><span class="file-path">app/app/sockets/index.js</span></td>
+            <td><code>cors.origin</code></td>
+            <td><span class="code-val new">origin: "http://192.168.1.15"</span></td>
+          </tr>
+          <tr>
+            <td><strong>Database Host</strong></td>
+            <td><span class="file-path">app/.env</span></td>
+            <td><code>DB_HOST</code></td>
+            <td><span class="code-val new">192.168.1.18</span> (or <code>127.0.0.1</code> if DB is local)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="callout-label">Tip:</span>
+        If you deploy to multiple client sites, parameterise these values. Wrap the four settings in a deployment script that prompts for the server LAN IP and substitutes them with <code>sed</code> (or PowerShell <code>(Get-Content …) -replace</code>) before starting the services.
+      </div>
+
+      <h3 id="ip-keep"><span class="mw-headline-number">3.2</span> Settings that must remain 127.0.0.1 / localhost</h3>
+      <p>These are the settings that <strong>must not change</strong> regardless of the client's network. They all describe traffic that stays entirely on the server host and therefore uses the loopback interface. Changing them to the LAN IP would expose internal services to the network and is a security regression.</p>
+
+      <table class="wiki-table">
+        <caption>Table 3.2 — Settings that must remain <code>127.0.0.1</code> / <code>localhost</code></caption>
+        <thead>
+          <tr><th>Component</th><th>File path</th><th>Setting</th><th>Fixed value</th><th>Why keep 127.0.0.1?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Backend Host</strong></td>
+            <td><span class="file-path">app/.env</span></td>
+            <td><code>APP_HOST</code></td>
+            <td><span class="code-val keep">127.0.0.1</span></td>
+            <td>Keeps Node / Executable bound locally; secured behind Nginx</td>
+          </tr>
+          <tr>
+            <td><strong>Nginx API Proxy</strong></td>
+            <td><span class="file-path">conf/nginx.conf</span></td>
+            <td><code>proxy_pass /api/</code></td>
+            <td><span class="code-val keep">http://127.0.0.1:8000/api/</span></td>
+            <td>Nginx connects to local Node/EXE instance internally</td>
+          </tr>
+          <tr>
+            <td><strong>Nginx Socket Proxy</strong></td>
+            <td><span class="file-path">conf/nginx.conf</span></td>
+            <td><code>proxy_pass /socket.io/</code></td>
+            <td><span class="code-val keep">http://127.0.0.1:8000/socket.io/</span></td>
+            <td>Nginx proxies local WebSocket port internally</td>
+          </tr>
+          <tr>
+            <td><strong>Redis Client</strong></td>
+            <td><span class="file-path">app/app/config/redisCleinet.js</span></td>
+            <td><code>socket.host</code></td>
+            <td><span class="code-val keep">127.0.0.1</span></td>
+            <td>Memurai/Redis service listens on local port 6379</td>
+          </tr>
+          <tr>
+            <td><strong>Frontend API URL</strong></td>
+            <td><span class="file-path">MallikNewVersion/.env</span></td>
+            <td><code>REACT_APP_API_URL</code></td>
+            <td><span class="code-val keep">/api/</span></td>
+            <td>Relative route — automatically uses client browser IP</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout important">
+        <span class="callout-label">Important:</span>
+        The frontend uses <strong>relative</strong> URLs (<code>/api/</code>) deliberately. The browser automatically resolves these against whatever IP it used to load the page, so the same static bundle works on every client server without rebuilds. Never hard-code an IP into the frontend build.
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 4 — BACKEND CHANGES
+         ============================================================ -->
+    <section id="backend-changes" class="section-wrap">
+      <h2><span class="mw-headline-number">4</span> Backend changes (Node.js Express &amp; PKG executable)</h2>
+
+      <p>For deployment, the Node.js backend is compiled into a standalone Windows executable (<code>server.exe</code>) using <a href="https://github.com/vercel/pkg" target="_blank" rel="noopener"><code>pkg</code></a>. The executable runs bound to <code>127.0.0.1:8000</code> and reads the <code>.env</code> file placed alongside it. This eliminates the Node.js runtime dependency on the production server and reduces the deployment footprint to a single self-contained binary.</p>
+
+      <p>The change set is small but each item is load-bearing. Skipping any one will cause subtle runtime failures that are hard to diagnose — for example, omitting <code>trust proxy</code> manifests as every client appearing to originate from <code>127.0.0.1</code> in audit logs, which can break rate-limiting and IP-based access control downstream.</p>
+
+      <table class="wiki-table">
+        <caption>Table 4.1 — Backend change specification</caption>
+        <thead>
+          <tr><th>#</th><th>File</th><th>Change specification</th><th>Old XAMPP value</th><th>New Nginx value</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><span class="file-path">server.js</span></td>
+            <td>Add <code>app.set("trust proxy", 1);</code> after <code>const app = express();</code></td>
+            <td><span class="code-val old">Not configured</span></td>
+            <td><span class="code-val new">app.set("trust proxy", 1);</span></td>
+            <td><span class="status-badge done">Applied</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><span class="file-path">app/.env</span></td>
+            <td>Set host binding to local interface</td>
+            <td><span class="code-val old">APP_HOST = 0.0.0.0</span></td>
+            <td><span class="code-val new">APP_HOST = 127.0.0.1</span></td>
+            <td><span class="status-badge done">Applied</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><span class="file-path">app/.env</span></td>
+            <td>Set server LAN static IP</td>
+            <td><span class="code-val old">APP_URL = http://localhost</span></td>
+            <td><span class="code-val new">APP_URL = http://192.168.1.15</span></td>
+            <td><span class="status-badge done">Applied</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><span class="file-path">app/app/sockets/index.js</span></td>
+            <td>Configure socket CORS origin to server IP</td>
+            <td><span class="code-val old">origin: "*"</span></td>
+            <td><span class="code-val new">origin: "http://192.168.1.15"</span></td>
+            <td><span class="status-badge done">Applied</span></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><span class="file-path">PKG Compilation</span></td>
+            <td>Compile Node.js backend into standalone Windows <code>.exe</code></td>
+            <td><span class="code-val old">Raw node server.js</span></td>
+            <td><span class="code-val new">npm install -g pkg &amp;&amp; pkg . --targets node18-windows-x64</span></td>
+            <td><span class="status-badge done">Executable ready</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="backend-pkg"><span class="mw-headline-number">4.1</span> PKG compilation</h3>
+      <p>The <a href="https://github.com/vercel/pkg" target="_blank" rel="noopener"><code>pkg</code></a> tool bundles a Node.js application into a single executable that includes the Node.js runtime, your JavaScript code, and any assets declared in <code>package.json</code>'s <code>pkg.scripts</code> / <code>pkg.assets</code> fields. The result is a <code>server.exe</code> that can be copied to a fresh Windows Server with no Node.js install required.</p>
+
+      <pre><code><span class="c-comment"># 1. Install pkg globally</span>
+npm install -g pkg
+
+<span class="c-comment"># 2. Make sure app/package.json declares the entry point + binary name</span>
+<span class="c-comment">#    "bin": "server.js",</span>
+<span class="c-comment">#    "pkg": { "targets": ["node18-windows-x64"], "outputPath": "dist" }</span>
+
+<span class="c-comment"># 3. Build the Windows x64 executable</span>
+cd C:\path\to\app
+pkg . --targets node18-windows-x64 --output dist/server.exe
+
+<span class="c-comment"># 4. Ship dist/server.exe + .env together — they MUST live in the same folder</span>
+<span class="c-comment">#    .env is read at process startup via dotenv</span></code></pre>
+
+      <div class="callout note">
+        <span class="callout-label">Note:</span>
+        <code>pkg</code> was archived by Vercel in 2023 but still works for Node 18 binaries. For greenfield projects consider <a href="https://github.com/vercel/ncc" target="_blank" rel="noopener"><code>@vercel/ncc</code></a> + <a href="https://github.com/yao-pkg/pkg" target="_blank" rel="noopener"><code>@yao-pkg/pkg</code></a> (community fork with Node 20+ support).
+      </div>
+
+      <h3 id="backend-trust-proxy"><span class="mw-headline-number">4.2</span> <code>trust proxy</code> — why it matters</h3>
+      <p>When Nginx proxies a request to the backend, the TCP source IP that Express sees is <code>127.0.0.1</code> — Nginx itself, not the original client. Without <code>trust proxy</code> enabled, every <code>req.ip</code> in your code will resolve to <code>127.0.0.1</code>, breaking IP-based rate limiting, audit logging, and geo-blocking.</p>
+
+      <p>Setting <code>app.set("trust proxy", 1)</code> tells Express to trust the <code>X-Forwarded-For</code> header set by Nginx (exactly one hop upstream). The value <code>1</code> is the proxy hop count — increase it if you chain multiple proxies (e.g., Cloudflare → Nginx → backend would use <code>2</code>).</p>
+
+      <pre><code><span class="c-comment">// server.js — immediately after `const app = express();`</span>
+const app = express();
+app.set(<span class="c-str">"trust proxy"</span>, <span class="c-num">1</span>);  <span class="c-comment">// trust single Nginx proxy hop</span>
+
+<span class="c-comment">// Now req.ip will be the real client IP, not 127.0.0.1</span>
+app.use((req, res, next) =&gt; {
+  console.log(<span class="c-str">`</span><span class="c-str">${req.ip} ${req.method} ${req.path}</span><span class="c-str">`</span>);
+  next();
+});</code></pre>
+
+      <div class="callout warning">
+        <span class="callout-label">Warning:</span>
+        Never set <code>trust proxy</code> to <code>true</code> (unconditional) when your backend is reachable from untrusted networks. An attacker could forge <code>X-Forwarded-For</code> headers and spoof their IP. Setting it to the integer <code>1</code> limits trust to exactly one proxy hop, which is correct for a single-Nginx topology.
+      </div>
+
+      <h3 id="backend-socket-cors"><span class="mw-headline-number">4.3</span> Socket.io CORS</h3>
+      <p>Socket.io's CORS configuration must list the exact origin that the browser uses to load the SPA. Because the SPA is now served from <code>http://192.168.1.15/MallikEngineering/</code>, the browser's <code>Origin</code> header for the WebSocket upgrade will be <code>http://192.168.1.15</code>. Configure it explicitly:</p>
+
+      <pre><code><span class="c-comment">// app/app/sockets/index.js</span>
+const io = require(<span class="c-str">"socket.io"</span>)(server, {
+  cors: {
+    origin: <span class="c-str">"http://192.168.1.15"</span>,  <span class="c-comment">// ← MUST match the SPA origin exactly</span>
+    methods: [<span class="c-str">"GET"</span>, <span class="c-str">"POST"</span>],
+    credentials: <span class="c-key">true</span>
+  }
+});</code></pre>
+
+      <p>The previous <code>origin: "*"</code> configuration is no longer acceptable: it allowed any website to open a WebSocket to the backend, which is a CSRF vector on state-changing socket events. Locking it down to the exact SPA origin closes that hole.</p>
+    </section>
+
+    <!-- ============================================================
+         SECTION 5 — FRONTEND CHANGES
+         ============================================================ -->
+    <section id="frontend-changes" class="section-wrap">
+      <h2><span class="mw-headline-number">5</span> Frontend changes (React JS)</h2>
+
+      <p>The React frontend requires four small but interdependent changes. The guiding principle is to remove every hard-coded IP from the build and replace it with relative paths, so the same static bundle can be shipped to every client server without rebuilds. The only IP-specific value that remains is the URL the browser uses to reach the server, and that is supplied at runtime by the user typing the server's LAN IP into the address bar.</p>
+
+      <table class="wiki-table">
+        <caption>Table 5.1 — Frontend change specification</caption>
+        <thead>
+          <tr><th>#</th><th>File</th><th>Change specification</th><th>Old XAMPP value</th><th>New Nginx value</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><span class="file-path">MallikNewVersion/.env</span></td>
+            <td>Set relative API URL route</td>
+            <td><span class="code-val old">REACT_APP_API_URL=http://192.168.1.15:8001/api/</span></td>
+            <td><span class="code-val new">REACT_APP_API_URL=/api/</span></td>
+            <td><span class="status-badge done">Applied</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><span class="file-path">MallikNewVersion/.env</span></td>
+            <td>Set relative image route</td>
+            <td><span class="code-val old">REACT_APP_IMAGE_URL=http://192.168.1.15:8001/</span></td>
+            <td><span class="code-val new">REACT_APP_IMAGE_URL=/</span></td>
+            <td><span class="status-badge done">Applied</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><span class="file-path">MallikNewVersion/package.json</span></td>
+            <td>Set homepage to subpath (to serve app at <code>/MallikEngineering/</code>)</td>
+            <td><span class="code-val old">"homepage": "http://192.168.0.4/MallikEngineering/"</span></td>
+            <td><span class="code-val new">"homepage": "/MallikEngineering/"</span></td>
+            <td><span class="status-badge done">Applied</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><span class="file-path">Build Directory</span></td>
+            <td>Compile static production bundle</td>
+            <td><span class="code-val old">Dynamic Apache folder</span></td>
+            <td><span class="code-val new">npm run build</span></td>
+            <td><span class="status-badge done">Applied</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="frontend-env"><span class="mw-headline-number">5.1</span> Environment variables</h3>
+      <p>React's <code>REACT_APP_*</code> env vars are inlined at build time, not read at runtime. This means changing them requires a rebuild. The migration replaces hard-coded URLs with relative paths so the same bundle works on every client server without rebuilds.</p>
+
+      <pre><code><span class="c-comment"># MallikNewVersion/.env</span>
+<span class="c-comment"># Old — IP hard-coded into the build (requires rebuild per client):</span>
+<span class="c-comment"># REACT_APP_API_URL=http://192.168.1.15:8001/api/</span>
+<span class="c-comment"># REACT_APP_IMAGE_URL=http://192.168.1.15:8001/</span>
+
+<span class="c-comment"># New — relative paths; browser resolves against its own origin:</span>
+REACT_APP_API_URL=/api/
+REACT_APP_IMAGE_URL=/</code></pre>
+
+      <p>When the browser loads <code>http://192.168.1.15/MallikEngineering/</code> and the React code makes a request to <code>/api/user</code>, the browser resolves that to <code>http://192.168.1.15/api/user</code> — hitting Nginx, which proxies it to the backend on <code>127.0.0.1:8000</code>. The same bundle deployed to <code>http://10.0.0.5/MallikEngineering/</code> would transparently use <code>http://10.0.0.5/api/user</code>. No rebuild, no env file edit.</p>
+
+      <h3 id="frontend-homepage"><span class="mw-headline-number">5.2</span> <code>homepage</code> &amp; <code>BrowserRouter basename</code></h3>
+      <p>The <code>homepage</code> field in <code>package.json</code> tells the React build process what URL prefix the app will be served from. When set to <code>/MallikEngineering/</code>, the build output prefixes all asset URLs (<code>/MallikEngineering/static/js/main.xyz.js</code>, etc.) so they resolve correctly when served from a subpath rather than the document root.</p>
+
+      <p>For client-side routing to work, <code>BrowserRouter</code> must also be told its basename. Without <code>basename</code>, the router assumes it owns the entire URL path and will break on refresh of any route other than the index.</p>
+
+      <pre><code><span class="c-comment">// MallikNewVersion/src/App.js</span>
+import { BrowserRouter } from <span class="c-str">"react-router-dom"</span>;
+
+&lt;BrowserRouter basename=<span class="c-str">"/MallikEngineering"</span>&gt;
+  {<span class="c-comment">/* routes */</span>}
+&lt;/BrowserRouter&gt;</code></pre>
+
+      <div class="callout warning">
+        <span class="callout-label">Warning:</span>
+        The <code>basename</code> value must <strong>not</strong> have a trailing slash. <code>"/MallikEngineering"</code> is correct; <code>"/MallikEngineering/"</code> will break nested routes. The <code>homepage</code> in <code>package.json</code>, by contrast, <strong>must</strong> have a trailing slash. This asymmetry is a frequent source of broken deep-links.
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-label">Tip:</span>
+        After changing <code>homepage</code> or <code>basename</code>, always run <code>npm run build</code> and clear the browser cache before testing. Service workers (if registered) may serve a stale bundle that masks the change.
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 6 — NGINX CONFIGURATION
+         ============================================================ -->
+    <section id="nginx-config" class="section-wrap">
+      <h2><span class="mw-headline-number">6</span> Nginx configuration</h2>
+
+      <p>Nginx is the single ingress point for the entire stack. All HTTP traffic from LAN clients enters on port 80, and Nginx routes each request either to a static file in the React <code>build/</code> directory or to the backend <code>server.exe</code> on <code>127.0.0.1:8000</code>. The configuration below is the production-grade template; copy it into <code>C:\nginx\conf\nginx.conf</code> and adjust the <code>server_name</code> and <code>alias</code> path for the client server.</p>
+
+      <p>Two variants are documented: <strong>§6.1 Standard</strong> for normal deployments, and <strong>§6.2 Executable</strong> for when the backend is shipped as a compiled <code>server.exe</code>. The only difference between them is whether the API and Socket.io proxy blocks include a comment explaining that they target the executable; the actual proxy directives are identical because Nginx does not care whether the upstream is <code>node server.js</code> or <code>server.exe</code> — both listen on the same loopback port.</p>
+
+      <h3 id="nginx-standard"><span class="mw-headline-number">6.1</span> Standard configuration — React served at <code>/MallikEngineering/</code></h3>
+
+      <div class="callout warning">
+        <span class="callout-label">Warning:</span>
+        Because <code>package.json homepage</code> is now <code>"/MallikEngineering/"</code>, Nginx must use <code>location /MallikEngineering/</code> with <strong><code>alias</code></strong> (NOT <code>root</code>) pointing directly to the <code>build/</code> folder. A redirect from <code>/</code> to <code>/MallikEngineering/</code> is also added so users don't need to type the full path.
+      </div>
+
+      <pre><code><span class="c-comment"># Nginx Server Configuration — Serving React at /MallikEngineering/ subpath</span>
+server {
+    listen 80;
+    server_name _ 192.168.1.15 localhost; <span class="c-comment"># Replace 192.168.1.15 with actual client server static IP</span>
+
+    client_max_body_size 500m;
+
+    <span class="c-comment"># ── 1. Redirect root / to /MallikEngineering/ automatically ──</span>
+    location = / {
+        return 301 /MallikEngineering/;
+    }
+
+    <span class="c-comment"># ── 2. React Frontend served at /MallikEngineering/ subpath ──</span>
+    <span class="c-comment"># IMPORTANT: Use ^~ /MallikEngineering/ so React build assets take precedence</span>
+    location ^~ /MallikEngineering/ {
+        alias "C:/Users/Administrator/source/repos/Honda/Other Projects/Nginx demo/Mllik/MallikNewVersion/build/";
+        index index.html;
+        try_files $uri $uri/ /MallikEngineering/index.html;
+    }
+
+    <span class="c-comment"># ── 3. API → Backend Proxy ──</span>
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/api/;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    <span class="c-comment"># ── 4. Socket.io WebSocket Proxy ──</span>
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:8000/socket.io/;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    <span class="c-comment"># ── 5. Uploaded Document Folders (Proxied to Node.js backend) ──</span>
+    location /contractReview/ {
+        proxy_pass http://127.0.0.1:8000/contractReview/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:8000/uploads/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}</code></pre>
+
+      <h3 id="nginx-exe"><span class="mw-headline-number">6.2</span> Configuration — Executable (.exe) backend + subpath</h3>
+
+      <div class="callout note">
+        <span class="callout-label">Note:</span>
+        When deploying the backend as a compiled <code>server.exe</code> binary (via <code>pkg</code>), the Nginx <strong>/api/ and /socket.io/ proxy blocks remain 100% IDENTICAL</strong>. Only the frontend <code>location</code> block changes to serve React from <code>/MallikEngineering/</code> using <code>alias</code>. Nginx does not care whether the upstream is a Node.js process or a packaged executable — both listen on <code>127.0.0.1:8000</code>.
+      </div>
+
+      <pre><code><span class="c-comment"># Nginx Configuration — Executable (.exe) Deployment + /MallikEngineering/ subpath</span>
+server {
+    listen 80;
+    server_name _ 192.168.1.15 localhost; <span class="c-comment"># Replace 192.168.1.15 with actual client server static IP</span>
+
+    client_max_body_size 500m;
+
+    <span class="c-comment"># ── 1. Redirect root / → /MallikEngineering/ ──</span>
+    location = / {
+        return 301 /MallikEngineering/;
+    }
+
+    <span class="c-comment"># ── 2. React Frontend at /MallikEngineering/ (alias required for subpath!) ──</span>
+    <span class="c-comment"># NOTE: Replace with path to compiled React build/ directory on client server</span>
+    location /MallikEngineering/ {
+        alias "C:/Users/Administrator/source/repos/Honda/Other Projects/Nginx demo/Mllik/MallikNewVersion/build/";
+        try_files $uri $uri/ /MallikEngineering/index.html;
+    }
+
+    <span class="c-comment"># ── 3. API → Compiled Executable (server.exe) Proxy ──</span>
+    <span class="c-comment"># No change needed — Nginx proxies to 127.0.0.1:8000 same as node or exe</span>
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/api/;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    <span class="c-comment"># ── 4. Socket.io → Compiled Executable (server.exe) WebSocket Proxy ──</span>
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:8000/socket.io/;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}</code></pre>
+
+      <h3 id="nginx-directives"><span class="mw-headline-number">6.3</span> Directive reference</h3>
+      <p>Each Nginx directive in the configuration above has a specific purpose. Understanding them individually helps when debugging or extending the configuration (e.g., adding TLS, rate limiting, or gzip).</p>
+
+      <table class="wiki-table">
+        <caption>Table 6.1 — Nginx directive reference</caption>
+        <thead>
+          <tr><th>Directive</th><th>Purpose</th><th>Why it matters here</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>listen 80</code></td>
+            <td>Bind Nginx to port 80 on all interfaces</td>
+            <td>Single ingress port — only port 80 needs to be open in the firewall</td>
+          </tr>
+          <tr>
+            <td><code>server_name _ 192.168.1.15 localhost</code></td>
+            <td>Match requests by Host header</td>
+            <td><code>_</code> is a catch-all wildcard; explicit IPs ensure correct matching when accessed by LAN clients or localhost</td>
+          </tr>
+          <tr>
+            <td><code>client_max_body_size 500m</code></td>
+            <td>Maximum HTTP request body size</td>
+            <td>Allows file uploads up to 500 MB (contract reviews, document uploads); default Nginx value of 1 MB would reject them</td>
+          </tr>
+          <tr>
+            <td><code>location = / { return 301 /MallikEngineering/; }</code></td>
+            <td>Exact-match redirect from root</td>
+            <td>Users typing <code>http://SERVER_IP/</code> are auto-redirected to the SPA — no need to remember the subpath</td>
+          </tr>
+          <tr>
+            <td><code>location ^~ /MallikEngineering/</code></td>
+            <td>Prefix match with priority over regex</td>
+            <td>The <code>^~</code> modifier ensures React build assets (logos, images, JS) take precedence over any regex location blocks</td>
+          </tr>
+          <tr>
+            <td><code>alias "C:/.../build/"</code></td>
+            <td>Map URL prefix to filesystem path</td>
+            <td>Use <code>alias</code> (NOT <code>root</code>) when the location prefix does not exist in the filesystem path. <code>root</code> would append the prefix to the path and break asset URLs</td>
+          </tr>
+          <tr>
+            <td><code>try_files $uri $uri/ /MallikEngineering/index.html</code></td>
+            <td>Fallback chain for SPA routing</td>
+            <td>Client-side routes like <code>/MallikEngineering/dashboard</code> return <code>index.html</code> so React Router can take over</td>
+          </tr>
+          <tr>
+            <td><code>proxy_http_version 1.1</code></td>
+            <td>Use HTTP/1.1 to upstream</td>
+            <td>Required for WebSocket upgrade (<code>Connection: upgrade</code>) and keep-alive connection pooling to the backend</td>
+          </tr>
+          <tr>
+            <td><code>proxy_set_header X-Real-IP $remote_addr</code></td>
+            <td>Pass real client IP to backend</td>
+            <td>Combined with <code>trust proxy</code> on the backend, lets <code>req.ip</code> resolve to the actual client instead of <code>127.0.0.1</code></td>
+          </tr>
+          <tr>
+            <td><code>proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for</code></td>
+            <td>Append client IP to XFF chain</td>
+            <td>Standard header for proxy chains; allows multi-hop IP tracing</td>
+          </tr>
+          <tr>
+            <td><code>proxy_set_header Upgrade $http_upgrade</code></td>
+            <td>Pass WebSocket Upgrade header</td>
+            <td>Required for Socket.io — without this the WS handshake fails with 400/426 errors</td>
+          </tr>
+          <tr>
+            <td><code>proxy_set_header Connection "upgrade"</code></td>
+            <td>Force Connection header to "upgrade"</td>
+            <td>Overrides default <code>close</code> behavior; required for WebSocket persistence</td>
+          </tr>
+          <tr>
+            <td><code>proxy_read_timeout 300s</code></td>
+            <td>Timeout for reading upstream response</td>
+            <td>5-minute timeout allows long-running operations (large reports, batch jobs) without Nginx closing the connection prematurely</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout important">
+        <span class="callout-label">Important:</span>
+        The distinction between <code>alias</code> and <code>root</code> is the #1 source of Nginx misconfiguration. <code>root /var/www/build/;</code> with <code>location /MallikEngineering/</code> would serve files from <code>/var/www/build/MallikEngineering/</code> — wrong. <code>alias /var/www/build/;</code> serves from <code>/var/www/build/</code> — correct. When in doubt, test with <code>nginx -t</code> and verify with <code>curl -I http://localhost/MallikEngineering/</code>.
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 7 — DEPLOYMENT
+         ============================================================ -->
+    <section id="deployment" class="section-wrap">
+      <h2><span class="mw-headline-number">7</span> Step-by-step deployment</h2>
+
+      <p>Follow these sequential steps when setting up the Mallik ERP stack on a fresh on-premises Windows Server machine. Each step depends on the previous one — do not skip ahead. The whole procedure takes about 60–90 minutes on a clean Windows Server 2022 install with all prerequisites downloaded.</p>
+
+      <h3 id="deploy-prereq"><span class="mw-headline-number">7.1</span> Install server prerequisites</h3>
+      <p>Install Node.js, MariaDB, Memurai Redis, and Nginx. Node.js is only required on the build machine (for <code>pkg</code>); the production server can run without it once the <code>server.exe</code> is in place. MariaDB, Memurai, and Nginx are all installed as native Windows services.</p>
+
+      <ol>
+        <li><strong>Node.js (LTS):</strong> Download &amp; run the Node.js installer, or run <code>winget install OpenJS.NodeJS.LTS</code>. Verify with <code>node -v</code>.</li>
+        <li><strong>MariaDB Database:</strong> Install standalone MariaDB on port <code>3306</code> (or <code>3307</code>). Set root password and import the database schema:
+          <pre><code>mysql -u root -p -P 3306 server_mallik &lt; C:\path\to\database_dump.sql</code></pre>
+        </li>
+        <li><strong>Memurai Redis Service:</strong> Install Memurai Developer (Redis Windows service) using <code>winget install --id Memurai.MemuraiDeveloper -e</code>. Verify service running on port <code>6379</code>.</li>
+        <li><strong>Nginx Web Server:</strong> Download Nginx Windows binary (e.g., <code>nginx-1.30.4.zip</code> from nginx.org) and extract to <code>C:\nginx\</code>.</li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="callout-label">Tip:</span>
+        Use <a href="https://chocolatey.org" target="_blank" rel="noopener">Chocolatey</a> to script the prerequisite install: <code>choco install nodejs-lts mariadb memurai nginx -y</code>. This makes the deployment reproducible across servers.
+      </div>
+
+      <h3 id="deploy-backend"><span class="mw-headline-number">7.2</span> Configure &amp; package backend</h3>
+      <p>Configure the backend environment, verify the source changes, then compile to <code>server.exe</code> via <code>pkg</code>. The executable and the <code>.env</code> file <strong>must</strong> live in the same directory — <code>pkg</code> embeds the JavaScript but the runtime still reads <code>.env</code> from disk at startup.</p>
+
+      <ol>
+        <li>Open <code>app/.env</code> and set:
+          <pre><code>APP_HOST = 127.0.0.1
+APP_URL = http://&lt;SERVER_LAN_IP&gt;
+APP_PORT = 8000
+DB_HOST = 127.0.0.1   <span class="c-comment"># or database server IP</span></code></pre>
+        </li>
+        <li>Verify <code>app/server.js</code> includes <code>app.set("trust proxy", 1);</code> right after <code>const app = express();</code>.</li>
+        <li>Verify <code>app/app/sockets/index.js</code> sets <code>origin: "http://&lt;SERVER_LAN_IP&gt;"</code>.</li>
+        <li><strong>Compile Backend to Windows Executable (.exe) via PKG:</strong>
+          <pre><code>npm install -g pkg
+cd C:\path\to\app &amp;&amp; pkg . --targets node18-windows-x64
+<span class="c-comment"># Generates server.exe in project directory</span></code></pre>
+        </li>
+        <li>Launch executable on server (ensure <code>.env</code> is in the same folder as <code>server.exe</code>):
+          <pre><code>.\server.exe</code></pre>
+        </li>
+      </ol>
+
+      <h3 id="deploy-frontend"><span class="mw-headline-number">7.3</span> Build frontend production bundle</h3>
+      <p>The frontend must be rebuilt after every code or env change. The build output is a static <code>build/</code> directory containing <code>index.html</code>, hashed JS/CSS bundles, and assets. This directory is what Nginx serves via the <code>alias</code> directive.</p>
+
+      <ol>
+        <li>Open <code>MallikNewVersion/.env</code> and set relative paths:
+          <pre><code>REACT_APP_API_URL=/api/
+REACT_APP_IMAGE_URL=/</code></pre>
+        </li>
+        <li>Open <code>MallikNewVersion/package.json</code> and set: <code>"homepage": "/MallikEngineering/"</code>
+          <div class="callout warning" style="margin-top:8px; margin-bottom:8px;">
+            <span class="callout-label">Warning:</span> This tells React to prefix all asset paths with <code>/MallikEngineering/</code> in the build output — must match the Nginx <code>location</code> block exactly.
+          </div>
+        </li>
+        <li>Compile the production bundle:
+          <pre><code>cd C:\path\to\MallikNewVersion &amp;&amp; npm run build</code></pre>
+        </li>
+      </ol>
+
+      <h3 id="deploy-nginx"><span class="mw-headline-number">7.4</span> Configure &amp; start Nginx</h3>
+      <p>Copy the configuration from <a href="#nginx-config">§6</a> into <code>C:\nginx\conf\nginx.conf</code>, adjust the <code>server_name</code> and <code>alias</code> path for the client server, then test and start Nginx.</p>
+
+      <ol>
+        <li>Edit <code>C:\nginx\conf\nginx.conf</code> with the following key settings:
+          <ul>
+            <li>Set <code>server_name _ &lt;SERVER_LAN_IP&gt; localhost;</code> (the <code>_</code> is a wildcard catch-all)</li>
+            <li>Add root redirect: <code>location = / { return 301 /MallikEngineering/; }</code></li>
+            <li>Use <strong><code>alias</code></strong> (NOT <code>root</code>) for the frontend location block:
+              <pre><code>location /MallikEngineering/ {
+    alias "C:\path\to\MallikNewVersion\build\";
+    try_files $uri $uri/ /MallikEngineering/index.html;
+}</code></pre>
+            </li>
+          </ul>
+        </li>
+        <li>Test Nginx configuration syntax:
+          <pre><code>C:\nginx\nginx.exe -t</code></pre>
+        </li>
+        <li>Start Nginx:
+          <pre><code>C:\nginx\nginx.exe         <span class="c-comment"># first start</span>
+<span class="c-comment"># OR</span>
+C:\nginx\nginx.exe -s reload   <span class="c-comment"># if updating an existing instance</span></code></pre>
+        </li>
+      </ol>
+
+      <h3 id="deploy-firewall"><span class="mw-headline-number">7.5</span> Configure Windows Firewall (allow port 80 inbound)</h3>
+      <p>Execute the following command in Administrator PowerShell to allow LAN client connections on port 80. No other inbound ports need to be opened — the backend, database, and cache are all loopback-only.</p>
+
+      <pre><code>New-NetFirewallRule -DisplayName "Allow Nginx HTTP Port 80" `
+    -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow</code></pre>
+
+      <div class="callout tip">
+        <span class="callout-label">Tip:</span>
+        To audit the rule later: <code>Get-NetFirewallRule -DisplayName "Allow Nginx*"</code>. To remove it: <code>Remove-NetFirewallRule -DisplayName "Allow Nginx HTTP Port 80"</code>.
+      </div>
+
+      <h3 id="deploy-services"><span class="mw-headline-number">7.6</span> Configure Windows Services for auto-start</h3>
+      <p>Use <a href="https://nssm.cc" target="_blank" rel="noopener">NSSM</a> (Non-Sucking Service Manager) to install Nginx and the backend executable as Windows Services. This ensures both restart automatically on system boot and survive crashes.</p>
+
+      <ol>
+        <li><strong>Install NSSM:</strong> <code>choco install nssm -y</code> (or download from nssm.cc)</li>
+        <li><strong>Nginx as Windows Service:</strong>
+          <pre><code>nssm install Nginx "C:\nginx\nginx.exe"
+nssm start Nginx</code></pre>
+        </li>
+        <li><strong>Backend (<code>server.exe</code>) as Windows Service:</strong>
+          <pre><code>nssm install MallikBackend "C:\path\to\server.exe"
+nssm start MallikBackend</code></pre>
+        </li>
+      </ol>
+
+      <div class="callout note">
+        <span class="callout-label">Note:</span>
+        NSSM sets the service working directory to the executable's folder by default, which is why <code>.env</code> must sit next to <code>server.exe</code>. If you need a different working directory, set it explicitly with <code>nssm set MallikBackend AppDirectory "C:\path\to\app"</code> before starting the service.
+      </div>
+
+      <h3 id="deploy-verify"><span class="mw-headline-number">7.7</span> End-to-end verification</h3>
+      <p>Once all services are running, verify each layer of the stack independently before declaring victory. The order matters: test from the server first, then from a LAN client, then exercise a real user flow.</p>
+
+      <ol>
+        <li>Open browser <strong>on the server</strong>:
+          <pre><code>http://localhost/  →  auto-redirects to  →  http://localhost/MallikEngineering/  ✓</code></pre>
+        </li>
+        <li>Open browser on <strong>any LAN client PC</strong>:
+          <pre><code>http://&lt;SERVER_LAN_IP&gt;/MallikEngineering/   ✓</code></pre>
+        </li>
+        <li>Test API directly from browser or Postman:
+          <pre><code>http://&lt;SERVER_LAN_IP&gt;/api/user   ✓</code></pre>
+        </li>
+        <li>Perform login, test data grid loads, and verify WebSocket connection in browser DevTools → Network tab → filter <code>WS</code>.</li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="callout-label">Tip:</span>
+        If the WebSocket handshake fails, check the browser DevTools Console for the exact error. <code>400 Bad Request</code> usually means the Socket.io CORS origin mismatch. <code>502 Bad Gateway</code> means the backend service is down or not listening on <code>127.0.0.1:8000</code>. See <a href="#troubleshooting">§9 Troubleshooting</a> for the full diagnostic matrix.
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 8 — SUBPATH DEPLOYMENT
+         ============================================================ -->
+    <section id="subpath" class="section-wrap">
+      <h2><span class="mw-headline-number">8</span> Subpath deployment (<code>/MallikEngineering/</code>)</h2>
+
+      <p>If the client requires serving the application under a subpath (e.g., <code>http://&lt;SERVER_IP&gt;/MallikEngineering/</code>) instead of the root <code>http://&lt;SERVER_IP&gt;/</code>, make the following specific configuration updates. Subpath hosting is useful when multiple applications share a single domain, or when the ERP must coexist with another web app on the same Nginx server.</p>
+
+      <p>The key challenge with subpath hosting is that every layer — React build, React Router, image URLs, and Nginx — must agree on the prefix. A mismatch in any one layer produces broken assets, 404s on deep links, or images that fail to load.</p>
+
+      <h4>Subpath code &amp; config modifications table</h4>
+
+      <table class="wiki-table">
+        <caption>Table 8.1 — Subpath deployment modifications</caption>
+        <thead>
+          <tr><th>#</th><th>File path</th><th>Setting / Directive</th><th>Value for subpath deployment</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><span class="file-path">MallikNewVersion/package.json</span></td>
+            <td><code>homepage</code></td>
+            <td><span class="code-val new">"homepage": "/MallikEngineering/"</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><span class="file-path">MallikNewVersion/src/App.js</span></td>
+            <td><code>BrowserRouter basename</code></td>
+            <td><span class="code-val new">&lt;BrowserRouter basename="/MallikEngineering"&gt;</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><span class="file-path">MallikNewVersion/.env</span></td>
+            <td><code>REACT_APP_IMAGE_URL</code></td>
+            <td><span class="code-val new">REACT_APP_IMAGE_URL=/MallikEngineering/</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><span class="file-path">MallikNewVersion/</span></td>
+            <td>Rebuild Production Bundle</td>
+            <td><span class="code-val new">npm run build</span></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><span class="file-path">conf/nginx.conf</span></td>
+            <td>Frontend Location Block</td>
+            <td><span class="code-val new">location /MallikEngineering/ { alias "C:/.../build/"; try_files $uri $uri/ /MallikEngineering/index.html; }</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Nginx configuration snippet for subpath hosting</h4>
+
+      <pre><code><span class="c-comment"># Nginx Config for Hosting under http://&lt;SERVER_IP&gt;/MallikEngineering/</span>
+server {
+    listen 80;
+    server_name 192.168.1.15 localhost;
+
+    client_max_body_size 500m;
+
+    <span class="c-comment"># ── 1. React Frontend Subpath (/MallikEngineering/) ──</span>
+    location /MallikEngineering/ {
+        <span class="c-comment"># NOTE: Use 'alias' with trailing slash for subpath directory mapping</span>
+        alias "C:/Users/Administrator/source/repos/Honda/Other Projects/Nginx demo/Mllik/MallikNewVersion/build/";
+        try_files $uri $uri/ /MallikEngineering/index.html;
+    }
+
+    <span class="c-comment"># ── 2. (Optional) Redirect root http://localhost/ -&gt; http://localhost/MallikEngineering/ ──</span>
+    location = / {
+        return 301 /MallikEngineering/;
+    }
+
+    <span class="c-comment"># ── 3. API Proxy ──</span>
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300s;
+    }
+
+    <span class="c-comment"># ── 4. Socket.io Proxy ──</span>
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:8000/socket.io/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 300s;
+    }
+}</code></pre>
+
+      <div class="callout warning">
+        <span class="callout-label">Warning:</span>
+        When changing from root deployment to subpath (or vice versa), every layer must be updated <strong>together</strong>. A common failure mode is updating <code>homepage</code> but forgetting <code>basename</code> — the app loads but deep links to <code>/MallikEngineering/users</code> return Nginx 404 because the router does not recognise the prefix.
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 9 — TROUBLESHOOTING
+         ============================================================ -->
+    <section id="troubleshooting" class="section-wrap">
+      <h2><span class="mw-headline-number">9</span> Troubleshooting</h2>
+
+      <p>This section catalogues the most common deployment failures, their symptoms, root causes, and fixes. When diagnosing, always start from the bottom of the stack (is the database running?) and work upward — most "the app is down" reports are actually a stuck Windows Service or a misconfigured <code>.env</code>.</p>
+
+      <h3>9.1 Symptom → cause → fix matrix</h3>
+
+      <table class="wiki-table">
+        <caption>Table 9.1 — Common deployment failures</caption>
+        <thead>
+          <tr><th>Symptom</th><th>Likely cause</th><th>Diagnostic command</th><th>Fix</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>502 Bad Gateway</code> on <code>/api/*</code></td>
+            <td>Backend <code>server.exe</code> not running, or not listening on <code>127.0.0.1:8000</code></td>
+            <td><code>netstat -ano | findstr :8000</code></td>
+            <td>Start the service: <code>nssm start MallikBackend</code>. Check Windows Event Viewer for crash logs.</td>
+          </tr>
+          <tr>
+            <td><code>502</code> intermittently, every ~60s</td>
+            <td>Nginx keep-alive timeout &gt; backend idle timeout</td>
+            <td>Check Nginx <code>error.log</code> for "upstream prematurely closed"</td>
+            <td>Add <code>keepalive 32;</code> in <code>upstream</code> block and <code>proxy_next_upstream error timeout http_502;</code></td>
+          </tr>
+          <tr>
+            <td><code>400 Bad Request</code> on Socket.io handshake</td>
+            <td>Socket.io CORS origin mismatch</td>
+            <td>Browser DevTools Console</td>
+            <td>Set <code>origin: "http://&lt;SERVER_LAN_IP&gt;"</code> in <code>app/app/sockets/index.js</code> to match the SPA origin exactly</td>
+          </tr>
+          <tr>
+            <td>React assets 404 (<code>/static/js/main.*.js</code>)</td>
+            <td>Wrong <code>homepage</code> in <code>package.json</code>, or Nginx using <code>root</code> instead of <code>alias</code></td>
+            <td><code>curl -I http://&lt;IP&gt;/MallikEngineering/static/js/main.&lt;hash&gt;.js</code></td>
+            <td>Set <code>"homepage": "/MallikEngineering/"</code>, rebuild, and use <code>alias</code> (not <code>root</code>) in Nginx</td>
+          </tr>
+          <tr>
+            <td>Deep links 404 on refresh (e.g., <code>/MallikEngineering/users</code>)</td>
+            <td>Missing or incorrect <code>try_files</code> fallback</td>
+            <td>Nginx <code>error.log</code></td>
+            <td>Ensure <code>try_files $uri $uri/ /MallikEngineering/index.html;</code> in the location block</td>
+          </tr>
+          <tr>
+            <td>Images broken (<code>/uploads/</code> returns 404)</td>
+            <td>Missing Nginx proxy block for <code>/uploads/</code></td>
+            <td>Nginx <code>error.log</code></td>
+            <td>Add <code>location /uploads/ { proxy_pass http://127.0.0.1:8000/uploads/; … }</code></td>
+          </tr>
+          <tr>
+            <td>All requests return old content after deploy</td>
+            <td>Browser cache or service worker serving stale bundle</td>
+            <td>DevTools → Network → "Disable cache"</td>
+            <td>Hard refresh (<code>Ctrl+Shift+R</code>); unregister service worker in DevTools → Application</td>
+          </tr>
+          <tr>
+            <td><code>req.ip</code> always <code>127.0.0.1</code> in backend logs</td>
+            <td><code>trust proxy</code> not set, or set to wrong value</td>
+            <td>Backend log inspection</td>
+            <td>Set <code>app.set("trust proxy", 1);</code> immediately after <code>const app = express();</code></td>
+          </tr>
+          <tr>
+            <td>Database connection refused</td>
+            <td>MariaDB service down, or wrong port/credentials in <code>.env</code></td>
+            <td><code>netstat -ano | findstr :3306</code></td>
+            <td>Start MariaDB service; verify <code>DB_HOST</code>, <code>DB_PORT</code>, <code>DB_USER</code>, <code>DB_PASS</code> in <code>.env</code></td>
+          </tr>
+          <tr>
+            <td>Redis connection refused</td>
+            <td>Memurai service not installed or not started</td>
+            <td><code>netstat -ano | findstr :6379</code></td>
+            <td>Install Memurai: <code>winget install --id Memurai.MemuraiDeveloper -e</code>; start service</td>
+          </tr>
+          <tr>
+            <td>File uploads fail with <code>413 Request Entity Too Large</code></td>
+            <td>Nginx <code>client_max_body_size</code> too small (default 1 MB)</td>
+            <td>Nginx <code>error.log</code></td>
+            <td>Set <code>client_max_body_size 500m;</code> in server block and <code>nginx -s reload</code></td>
+          </tr>
+          <tr>
+            <td>App works on server, fails from LAN client</td>
+            <td>Windows Firewall blocking port 80</td>
+            <td>From client: <code>Test-NetConnection &lt;SERVER_IP&gt; -Port 80</code></td>
+            <td>Add inbound firewall rule: <code>New-NetFirewallRule -DisplayName "Allow Nginx HTTP Port 80" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>9.2 Log file locations</h3>
+      <p>When diagnosing, check logs in this order — backend first (most informative), then Nginx, then Windows Event Viewer.</p>
+
+      <table class="wiki-table">
+        <caption>Table 9.2 — Log file locations</caption>
+        <thead><tr><th>Component</th><th>Log location</th><th>What to look for</th></tr></thead>
+        <tbody>
+          <tr><td>Backend (<code>server.exe</code>)</td><td>Stdout (captured by NSSM at <code>%SystemRoot%\System32\LogFiles\…</code>) or configured Winston path</td><td>Stack traces, unhandled promise rejections, DB errors</td></tr>
+          <tr><td>Nginx access</td><td><code>C:\nginx\logs\access.log</code></td><td>HTTP status codes, response times, client IPs</td></tr>
+          <tr><td>Nginx error</td><td><code>C:\nginx\logs\error.log</code></td><td>Upstream timeouts, config syntax errors, permission denied</td></tr>
+          <tr><td>MariaDB</td><td><code>C:\Program Files\MariaDB XX.X\data\*.err</code></td><td>Connection limits, slow queries, crash recovery</td></tr>
+          <tr><td>Memurai</td><td>Windows Event Viewer → Applications and Services Logs → Memurai</td><td>Service start/stop, memory pressure</td></tr>
+          <tr><td>Windows Service Control Manager</td><td>Event Viewer → Windows Logs → System</td><td>Service crashes, restart loops</td></tr>
+        </tbody>
+      </table>
+
+      <h3>9.3 Useful diagnostic commands</h3>
+
+      <pre><code><span class="c-comment"># ── Check which process is listening on which port ──</span>
+netstat -ano | findstr ":80 "
+netstat -ano | findstr ":8000"
+netstat -ano | findstr ":3306"
+netstat -ano | findstr ":6379"
+
+<span class="c-comment"># ── Test Nginx config syntax ──</span>
+C:\nginx\nginx.exe -t
+
+<span class="c-comment"># ── Reload Nginx without dropping connections ──</span>
+C:\nginx\nginx.exe -s reload
+
+<span class="c-comment"># ── Check Windows Service status ──</span>
+sc query Nginx
+sc query MallikBackend
+sc query Memurai
+sc query MariaDB
+
+<span class="c-comment"># ── Test from server itself (bypasses LAN/firewall) ──</span>
+curl -v http://127.0.0.1/MallikEngineering/
+curl -v http://127.0.0.1/api/user
+
+<span class="c-comment"># ── Test backend directly (bypasses Nginx) ──</span>
+curl -v http://127.0.0.1:8000/api/user
+
+<span class="c-comment"># ── Check Windows Firewall rules ──</span>
+Get-NetFirewallRule -DisplayName "*Nginx*"
+Get-NetFirewallPortFilter | Where-Object LocalPort -eq 80</code></pre>
+    </section>
+
+    <!-- ============================================================
+         SECTION 10 — SECURITY HARDENING
+         ============================================================ -->
+    <section id="security" class="section-wrap">
+      <h2><span class="mw-headline-number">10</span> Security hardening</h2>
+
+      <p>The default deployment is functional but not production-hardened. This section lists additional security controls to apply before exposing the server to a wider network or to the internet. Treat each item as a checklist: not all are mandatory for every deployment, but each should be consciously accepted or rejected with a documented reason.</p>
+
+      <h3>10.1 Network layer</h3>
+      <ul>
+        <li><strong>Restrict port 80 to known LAN subnets.</strong> Replace the wildcard firewall rule with a scoped one:
+          <pre><code>New-NetFirewallRule -DisplayName "Allow Nginx HTTP Port 80 (LAN only)" `
+    -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow `
+    -RemoteAddress 192.168.1.0/24,192.168.2.0/24</code></pre>
+        </li>
+        <li><strong>Disable unnecessary inbound ports.</strong> Audit with <code>Get-NetFirewallPortFilter | Where-Object { $_.LocalPort -lt 5000 }</code> and remove any rule exposing 3306, 6379, or 8000 to the LAN.</li>
+        <li><strong>Place the server behind a corporate firewall</strong> with egress filtering if internet access is not required for the application itself.</li>
+      </ul>
+
+      <h3>10.2 Transport layer (TLS)</h3>
+      <p>HTTP on port 80 is acceptable for LAN-only deployments behind a corporate firewall, but TLS should be added for any deployment that handles authentication tokens, session cookies, or sensitive user data. Use Let's Encrypt (with <a href="https://win-acme.com" target="_blank" rel="noopener">win-acme</a> for auto-renewal on Windows) or an internal CA for on-prem deployments.</p>
+
+      <pre><code><span class="c-comment"># Nginx TLS snippet (add to server block, replace listen 80)</span>
+listen 443 ssl http2;
+listen 80;
+return 301 https://$host$request_uri;   <span class="c-comment"># force HTTPS redirect</span>
+
+ssl_certificate     C:/nginx/ssl/mallik.crt;
+ssl_certificate_key C:/nginx/ssl/mallik.key;
+ssl_protocols       TLSv1.2 TLSv1.3;
+ssl_ciphers         HIGH:!aNULL:!MD5;
+ssl_session_cache   shared:SSL:10m;
+ssl_session_timeout 10m;
+
+<span class="c-comment"># HSTS — only enable after confirming HTTPS works end-to-end</span>
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;</code></pre>
+
+      <div class="callout warning">
+        <span class="callout-label">Warning:</span>
+        Enabling HSTS is a one-way door — once a browser sees the header, it will refuse to connect via HTTP for the next <code>max-age</code> seconds. Test with <code>max-age=300</code> first, then increase to a year once you are confident.
+      </div>
+
+      <h3>10.3 Application layer</h3>
+      <ul>
+        <li><strong>Restrict <code>.env</code> file NTFS permissions</strong> to the service account only:
+          <pre><code>icacls C:\path\to\server.exe\.env /inheritance:r
+icacls C:\path\to\server.exe\.env /grant:r "MallikBackendUser:(R)"</code></pre>
+        </li>
+        <li><strong>Rotate database credentials</strong> on a quarterly cadence. Use a dedicated MariaDB user with the minimum privileges required (no <code>GRANT ALL</code>).
+          <pre><code>CREATE USER 'mallik_app'@'127.0.0.1' IDENTIFIED BY 'strong-password';
+GRANT SELECT, INSERT, UPDATE, DELETE ON server_mallik.* TO 'mallik_app'@'127.0.0.1';
+FLUSH PRIVILEGES;</code></pre>
+        </li>
+        <li><strong>Set a strong Redis password</strong> in <code>memurai.conf</code>:
+          <pre><code>requirepass YourStrongRedisPasswordHere
+bind 127.0.0.1
+protected-mode yes</code></pre>
+          Then update <code>app/app/config/redisCleinet.js</code> to authenticate.
+        </li>
+        <li><strong>Add security headers</strong> in Nginx:
+          <pre><code>add_header X-Content-Type-Options "nosniff" always;
+add_header X-Frame-Options "SAMEORIGIN" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';" always;</code></pre>
+        </li>
+      </ul>
+
+      <h3>10.4 OS layer</h3>
+      <ul>
+        <li><strong>Run services as a low-privilege account</strong>, not <code>LocalSystem</code>. Create a dedicated <code>MallikBackendUser</code> with <code>Log on as a service</code> right and use NSSM's <code>nssm set MallikBackend ObjectName ".\MallikBackendUser" "password"</code>.</li>
+        <li><strong>Enable Windows Defender</strong> with real-time protection and add folder exclusions only for the Nginx log directory and MariaDB data directory (not for the executable).</li>
+        <li><strong>Enable automatic Windows Updates</strong> with active hours configured to the maintenance window.</li>
+        <li><strong>Restrict RDP access</strong> to a single admin jump host; never expose RDP (port 3389) to the internet.</li>
+      </ul>
+    </section>
+
+    <!-- ============================================================
+         SECTION 11 — PERFORMANCE TUNING
+         ============================================================ -->
+    <section id="performance" class="section-wrap">
+      <h2><span class="mw-headline-number">11</span> Performance tuning</h2>
+
+      <p>Once the stack is stable, tune for throughput and latency. The defaults in the configuration above are conservative; the values below are starting points for production load. Always benchmark before and after each change using a tool like <a href="https://httpd.apache.org/docs/2.4/programs/ab.html" target="_blank" rel="noopener"><code>ab</code></a> or <a href="https://k6.io" target="_blank" rel="noopener">k6</a>.</p>
+
+      <h3>11.1 Nginx tuning</h3>
+      <pre><code><span class="c-comment"># nginx.conf — top-level (outside server block)</span>
+worker_processes auto;        <span class="c-comment"># one worker per CPU core</span>
+worker_rlimit_nofile 65535;   <span class="c-comment"># raise FD limit</span>
+
+events {
+    worker_connections 4096;  <span class="c-comment"># concurrent connections per worker</span>
+    use epoll;                <span class="c-comment"># Linux only; on Windows leave default</span>
+    multi_accept on;
+}
+
+http {
+    <span class="c-comment"># ── Connection pooling to upstream ──</span>
+    upstream backend {
+        server 127.0.0.1:8000;
+        keepalive 32;             <span class="c-comment"># maintain 32 idle conns to backend</span>
+    }
+
+    <span class="c-comment"># ── Gzip compression ──</span>
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript image/svg+xml;
+
+    <span class="c-comment"># ── Static asset caching ──</span>
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    <span class="c-comment"># ── Use the upstream pool in proxy blocks ──</span>
+    location /api/ {
+        proxy_pass http://backend/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";   <span class="c-comment"># enable keepalive</span>
+        <span class="c-comment"># … rest of proxy headers …</span>
+    }
+}</code></pre>
+
+      <h3>11.2 Backend (Node.js / <code>server.exe</code>) tuning</h3>
+      <ul>
+        <li><strong>Cluster mode</strong>: If running <code>node server.js</code> directly, use <a href="https://pm2.keymetrics.io" target="_blank" rel="noopener">PM2</a> cluster mode to fork one process per core. For <code>server.exe</code>, run multiple instances on different ports (<code>8001</code>, <code>8002</code>, …) and load-balance via Nginx <code>upstream</code>.</li>
+        <li><strong>UV_THREADPOOL_SIZE</strong>: Default is 4. Raise to 16–32 for I/O-heavy workloads (file uploads, DB queries).
+          <pre><code><span class="c-comment"># Set in .env or as environment variable before launching server.exe</span>
+UV_THREADPOOL_SIZE=16</code></pre>
+        </li>
+        <li><strong>Node max old space size</strong>: Raise the V8 heap limit for memory-heavy operations.
+          <pre><code><span class="c-comment"># For node directly:</span>
+node --max-old-space-size=4096 server.js
+
+<span class="c-comment"># For pkg exe — set NODE_OPTIONS env var before launch:</span>
+set NODE_OPTIONS=--max-old-space-size=4096
+server.exe</code></pre>
+        </li>
+      </ul>
+
+      <h3>11.3 MariaDB tuning</h3>
+      <p>Edit <code>my.ini</code> (typically in <code>C:\Program Files\MariaDB XX.X\data\</code>) and restart the service. Values below are for a server with 16 GB RAM; scale proportionally.</p>
+
+      <pre><code><span class="c-comment"># my.ini — key buffer / pool settings</span>
+[mysqld]
+innodb_buffer_pool_size = 4G        <span class="c-comment"># ~25-50% of total RAM</span>
+innodb_log_file_size    = 512M
+innodb_flush_log_at_trx_commit = 2  <span class="c-comment"># 1=ACID, 2=perf (1s data loss on crash)</span>
+innodb_flush_method     = O_DIRECT
+max_connections         = 200
+query_cache_type        = 0         <span class="c-comment"># query cache is deprecated in MySQL 8; leave off</span>
+tmp_table_size          = 64M
+max_heap_table_size     = 64M</code></pre>
+
+      <h3>11.4 Memurai / Redis tuning</h3>
+      <pre><code><span class="c-comment"># memurai.conf</span>
+maxmemory 512mb                 <span class="c-comment"># cap memory usage</span>
+maxmemory-policy allkeys-lru    <span class="c-comment"># evict least-recently-used keys</span>
+timeout 300                    <span class="c-comment"># close idle clients after 5 min</span>
+tcp-keepalive 60               <span class="c-comment"># TCP keepalive interval</span>
+save ""                        <span class="c-comment"># disable RDB persistence if cache-only</span></code></pre>
+
+      <div class="callout tip">
+        <span class="callout-label">Tip:</span>
+        Always benchmark before and after tuning. A 5-minute load test with <a href="https://k6.io" target="_blank" rel="noopener">k6</a> against your realistic API mix will surface bottlenecks far more reliably than guessing. Common surprises: the bottleneck is the database (not Nginx), or file I/O on uploads (not CPU).
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 12 — FAQ
+         ============================================================ -->
+    <section id="faq" class="section-wrap">
+      <h2><span class="mw-headline-number">12</span> FAQ</h2>
+
+      <p>Short answers to the questions that come up most often during deployment. If your question is not here, search the article using the search box at the top, or check <a href="#troubleshooting">§9 Troubleshooting</a>.</p>
+
+      <h3 id="faq-1">Q: Can I keep using XAMPP's MySQL instead of installing native MariaDB?</h3>
+      <p>Technically yes — XAMPP's MySQL is just MariaDB under the hood. But you lose the primary benefit of decoupling: XAMPP's MySQL dies when XAMPP crashes. Installing native MariaDB as a Windows Service gives you independent restart, independent upgrade path, and independent backup. The migration is a 30-minute <code>mysqldump</code> + <code>mysql &lt; dump.sql</code> cycle.</p>
+
+      <h3 id="faq-2">Q: Do I need Node.js installed on the production server?</h3>
+      <p>No. The <code>pkg</code> compilation bundles the Node.js runtime into <code>server.exe</code>. The production server only needs <code>server.exe</code> + <code>.env</code> + MariaDB + Memurai + Nginx. Node.js is only required on the build machine.</p>
+
+      <h3 id="faq-3">Q: Why use <code>alias</code> instead of <code>root</code> in Nginx?</h3>
+      <p><code>root</code> appends the URL path to the filesystem path. With <code>location /MallikEngineering/ { root C:/build/; }</code>, Nginx looks for files at <code>C:/build/MallikEngineering/index.html</code> — wrong. With <code>alias</code>, Nginx strips the location prefix and serves from <code>C:/build/index.html</code> — correct. Use <code>alias</code> whenever the URL prefix does not exist in the filesystem.</p>
+
+      <h3 id="faq-4">Q: The frontend shows a blank white page. What's wrong?</h3>
+      <p>Open browser DevTools → Console. The most common causes are: (1) <code>homepage</code> in <code>package.json</code> does not match the Nginx <code>location</code> prefix — assets 404; (2) <code>BrowserRouter basename</code> has a trailing slash; (3) mixed content — page loaded over HTTPS but assets requested over HTTP. Fix the mismatches, rebuild, redeploy.</p>
+
+      <h3 id="faq-5">Q: Can I run multiple Mallik ERP instances on one server?</h3>
+      <p>Yes. Run multiple backend executables on different loopback ports (<code>8001</code>, <code>8002</code>), and add multiple <code>server</code> blocks in Nginx (one per domain or subpath). Each instance needs its own database schema and <code>.env</code>. Use separate Windows Service names (<code>MallikBackend-ClientA</code>, <code>MallikBackend-ClientB</code>).</p>
+
+      <h3 id="faq-6">Q: How do I rotate the <code>.env</code> secrets without downtime?</h3>
+      <p>Update <code>.env</code>, then <code>nssm restart MallikBackend</code>. The restart takes 1–3 seconds; during that window Nginx returns <code>502</code> on API calls. For zero-downtime rotation, run two backend instances on different ports, drain one, restart it, then drain the other. This is overkill for most on-prem deployments.</p>
+
+      <h3 id="faq-7">Q: Should I add TLS (HTTPS)?</h3>
+      <p>For LAN-only deployments behind a corporate firewall, HTTP is often acceptable. For any deployment that handles authentication tokens, session cookies, or PII, add TLS. See <a href="#security">§10.2</a> for the Nginx TLS snippet and certificate options (Let's Encrypt via <a href="https://win-acme.com" target="_blank" rel="noopener">win-acme</a>, or internal CA).</p>
+
+      <h3 id="faq-8">Q: <code>pkg</code> is archived — should I still use it?</h3>
+      <p>For Node 18 binaries already in production, <code>pkg</code> continues to work fine — it just receives no new features. For greenfield projects, consider <a href="https://github.com/vercel/ncc" target="_blank" rel="noopener"><code>@vercel/ncc</code></a> (bundles to a single JS file, requires Node on target) or <a href="https://github.com/yao-pkg/pkg" target="_blank" rel="noopener"><code>@yao-pkg/pkg</code></a> (community fork with Node 20+ support). For a true single-binary deployment on Node 20+, consider <a href="https://bun.sh/docs/bundler" target="_blank" rel="noopener">Bun's <code>--compile</code></a> or <a href="https://deno.com" target="_blank" rel="noopener">Deno's <code>compile</code></a>.</p>
+
+      <h3 id="faq-9">Q: How do I back up the database?</h3>
+      <p>Use <code>mysqldump</code> on a schedule via Windows Task Scheduler:</p>
+      <pre><code>mysqldump -u root -p&lt;password&gt; --single-transaction --routines --triggers server_mallik &gt; C:\backups\mallik_%date:~10,4%%date:~4,2%%date:~7,2%.sql</code></pre>
+      <p>For point-in-time recovery, enable MariaDB binary logs and ship them to a backup target. Retain at least 7 days of daily dumps plus 4 weeks of weekly dumps.</p>
+
+      <h3 id="faq-10">Q: The frontend was built with the wrong <code>homepage</code> — do I need to rebuild?</h3>
+      <p>Yes. <code>homepage</code> is a build-time setting; React inlines it into the asset URLs in <code>index.html</code>. There is no way to change it post-build without editing every <code>&lt;script src&gt;</code> and <code>&lt;link href&gt;</code> in <code>index.html</code>, which is fragile. Always rebuild after changing <code>homepage</code>.</p>
+    </section>
+
+    <!-- ============================================================
+         SEE ALSO
+         ============================================================ -->
+    <section id="see-also" class="section-wrap">
+      <h2>See also</h2>
+      <ul>
+        <li><a href="https://wiki.archlinux.org/title/Nginx" target="_blank" rel="noopener">ArchWiki — Nginx</a> — upstream Nginx configuration reference</li>
+        <li><a href="https://wiki.archlinux.org/title/MariaDB" target="_blank" rel="noopener">ArchWiki — MariaDB</a> — database setup and tuning</li>
+        <li><a href="https://wiki.archlinux.org/title/Redis" target="_blank" rel="noopener">ArchWiki — Redis</a> — cache service configuration</li>
+        <li><a href="https://nginx.org/en/docs/http/ngx_http_proxy_module.html" target="_blank" rel="noopener">Nginx proxy module documentation</a> — official reference for <code>proxy_pass</code> and related directives</li>
+        <li><a href="https://github.com/vercel/pkg" target="_blank" rel="noopener"><code>pkg</code> on GitHub</a> — Node.js → executable compiler</li>
+        <li><a href="https://github.com/yao-pkg/pkg" target="_blank" rel="noopener"><code>@yao-pkg/pkg</code></a> — community fork with Node 20+ support</li>
+        <li><a href="https://nssm.cc" target="_blank" rel="noopener">NSSM — Non-Sucking Service Manager</a> — Windows Service wrapper</li>
+        <li><a href="https://win-acme.com" target="_blank" rel="noopener">win-acme</a> — Let's Encrypt client for Windows / IIS / Nginx</li>
+        <li><a href="https://memurai.com" target="_blank" rel="noopener">Memurai</a> — production Redis-compatible cache for Windows</li>
+        <li><a href="https://k6.io" target="_blank" rel="noopener">k6</a> — load testing tool for performance benchmarking</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- ============== RIGHT RAIL ============== -->
+  <aside class="right-rail">
+    <h5>On this page</h5>
+    <div class="toc" id="right-toc">
+      <a href="#overview">1. Overview</a>
+      <a href="#architecture">2. Architecture</a>
+      <a href="#ip-config">3. IP configuration</a>
+      <a href="#backend-changes">4. Backend changes</a>
+      <a href="#frontend-changes">5. Frontend changes</a>
+      <a href="#nginx-config">6. Nginx configuration</a>
+      <a href="#deployment">7. Deployment</a>
+      <a href="#subpath">8. Subpath deployment</a>
+      <a href="#troubleshooting">9. Troubleshooting</a>
+      <a href="#security">10. Security</a>
+      <a href="#performance">11. Performance</a>
+      <a href="#faq">12. FAQ</a>
+    </div>
+
+    <div class="related-box">
+      <h6>Related articles</h6>
+      <ul>
+        <li><a href="https://wiki.archlinux.org/title/Nginx" target="_blank" rel="noopener">Nginx</a></li>
+        <li><a href="https://wiki.archlinux.org/title/MariaDB" target="_blank" rel="noopener">MariaDB</a></li>
+        <li><a href="https://wiki.archlinux.org/title/Redis" target="_blank" rel="noopener">Redis</a></li>
+        <li><a href="https://nginx.org/en/docs/http/ngx_http_proxy_module.html" target="_blank" rel="noopener">Nginx proxy module</a></li>
+        <li><a href="https://github.com/vercel/pkg" target="_blank" rel="noopener">pkg (Node → exe)</a></li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div>
+      <strong>Mallik ERP Infrastructure Migration Guide</strong> · This page was last edited on 2026-08-31.<br/>
+      Content is available under <a href="#">CC BY-SA 4.0</a> unless otherwise noted.
+    </div>
+    <div>
+      <a href="#">Privacy policy</a> · <a href="#">About ArchWiki</a> · <a href="#">Disclaimers</a>
+    </div>
+  </div>
+</footer>
+
+<button id="back-to-top" title="Back to top" aria-label="Back to top">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>
+</button>
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+(function(){
+  'use strict';
+
+  // ============ THEME TOGGLE ============
+  const html = document.documentElement;
+  const themeToggle = document.getElementById('theme-toggle');
+  const iconLight = document.getElementById('icon-light');
+  const iconDark  = document.getElementById('icon-dark');
+
+  const saved = (function(){
+    try { return localStorage.getItem('archwiki-theme'); } catch(e){ return null; }
+  })();
+  if (saved) setTheme(saved);
+  else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+
+  function setTheme(t){
+    html.setAttribute('data-theme', t);
+    if (t === 'dark') { iconLight.style.display='none'; iconDark.style.display='block'; }
+    else { iconLight.style.display='block'; iconDark.style.display='none'; }
+    try { localStorage.setItem('archwiki-theme', t); } catch(e){}
+  }
+  themeToggle.addEventListener('click', () => {
+    setTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // ============ SIDEBAR TOGGLE (mobile) ============
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    sidebarOverlay.classList.toggle('open');
+  });
+  sidebarOverlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+  });
+
+  // ============ PRINT BUTTON ============
+  document.getElementById('print-btn').addEventListener('click', () => window.print());
+  document.getElementById('edit-btn').addEventListener('click', () => alert('Source view is not available in this static snapshot.'));
+
+  // ============ COPY TO CLIPBOARD ============
+  document.querySelectorAll('pre').forEach(pre => {
+    if (!pre.querySelector('code')) return;
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.type = 'button';
+    btn.addEventListener('click', async () => {
+      const text = pre.querySelector('code').innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+      } catch(e) {
+        btn.textContent = 'Failed';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      }
+    });
+    pre.appendChild(btn);
+  });
+
+  // ============ READING PROGRESS + BACK-TO-TOP ============
+  const progressBar = document.getElementById('progress-bar');
+  const backToTop = document.getElementById('back-to-top');
+  function onScroll(){
+    const st = window.scrollY || document.documentElement.scrollTop;
+    const sh = (document.documentElement.scrollHeight - document.documentElement.clientHeight);
+    const pct = sh > 0 ? (st / sh) * 100 : 0;
+    progressBar.style.width = pct + '%';
+    if (st > 400) backToTop.classList.add('visible');
+    else backToTop.classList.remove('visible');
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+  backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // ============ SCROLL SPY (active section in TOC) ============
+  const tocLinks = document.querySelectorAll('.toc-link, .right-rail .toc a');
+  const sections = [];
+  document.querySelectorAll('[id]').forEach(el => {
+    const id = el.id;
+    if (!id) return;
+    const link = document.querySelector('.toc-link[data-section="' + id + '"]');
+    if (link) sections.push({ id: id, el: el, link: link });
+  });
+
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tocLinks.forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.toc-link[data-section="' + id + '"]').forEach(l => l.classList.add('active'));
+        // Also highlight the parent section link in right rail
+        const rightLink = document.querySelector('.right-rail .toc a[href="#' + id + '"]');
+        if (rightLink) {
+          document.querySelectorAll('.right-rail .toc a').forEach(l => l.classList.remove('active'));
+          rightLink.classList.add('active');
+        }
+      }
+    });
+  }, { rootMargin: '-100px 0px -70% 0px', threshold: 0 });
+
+  sections.forEach(s => spy.observe(s.el));
+
+  // ============ SEARCH ============
+  const searchInput = document.getElementById('search-input');
+  const searchResults = document.getElementById('search-results');
+
+  // Build searchable index from sections
+  const searchIndex = [];
+  document.querySelectorAll('h2, h3, h4').forEach(h => {
+    let section = h.closest('.section-wrap') || h.closest('section') || h.parentElement;
+    const id = section && section.id ? section.id : (h.id || '');
+    if (!id) return;
+
+    const title = h.textContent.replace(/^\s*\d+\.\s*/, '').trim();
+    const heading = h.textContent.trim();
+
+    // Gather text snippet from following siblings until next heading
+    let snippet = '';
+    let next = h.nextElementSibling;
+    while (next && !/^H[2-4]$/.test(next.tagName)) {
+      const txt = next.innerText ? next.innerText.trim() : '';
+      if (txt) { snippet = txt.slice(0, 200); break; }
+      next = next.nextElementSibling;
+    }
+
+    searchIndex.push({
+      id: id,
+      title: title,
+      heading: heading,
+      snippet: snippet,
+      level: parseInt(h.tagName.charAt(1), 10)
+    });
+  });
+
+  // Also index paragraphs containing code/file names
+  document.querySelectorAll('.main p, .main li, .main td').forEach((el, i) => {
+    const txt = el.innerText.trim();
+    if (txt.length < 5 || txt.length > 300) return;
+    const section = el.closest('[id]');
+    if (!section) return;
+    const id = section.id;
+    if (!id) return;
+    if (txt.match(/server\.exe|nginx\.conf|\.env|pkg|proxy_pass|Memurai|MariaDB|trust proxy|server_name|location \/MallikEngineering|REACT_APP_|APP_HOST|APP_URL/i)) {
+      searchIndex.push({
+        id: id,
+        title: 'Code/config reference',
+        heading: txt.slice(0, 80) + (txt.length > 80 ? '…' : ''),
+        snippet: txt,
+        level: 6
+      });
+    }
+  });
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const q = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(new RegExp('(' + q + ')', 'gi'), '<mark>$1</mark>');
+  }
+
+  function fuzzyScore(str, q) {
+    if (!q) return 0;
+    str = str.toLowerCase();
+    q = q.toLowerCase();
+    if (str.includes(q)) return 1000 - str.indexOf(q);
+    // Simple fuzzy: count matching chars in order
+    let si = 0, score = 0;
+    for (let i = 0; i < q.length && si < str.length; i++) {
+      if (str[si] === q[i]) { score++; }
+      while (si < str.length && str[si] !== q[i]) si++;
+      si++;
+    }
+    return score === q.length ? score : 0;
+  }
+
+  function doSearch(q) {
+    q = q.trim();
+    if (!q) { searchResults.classList.remove('open'); searchResults.innerHTML = ''; return; }
+
+    const scored = searchIndex
+      .map(item => {
+        const titleScore = fuzzyScore(item.title, q) * 2;
+        const snippetScore = fuzzyScore(item.snippet, q);
+        return { item, score: titleScore + snippetScore };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12);
+
+    if (scored.length === 0) {
+      searchResults.innerHTML = '<div class="search-empty">No matches for "<strong>' + escapeHtml(q) + '</strong>"</div>';
+      searchResults.classList.add('open');
+      return;
+    }
+
+    // Group by section
+    const groups = {};
+    scored.forEach(({ item }) => {
+      const key = item.id;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    });
+
+    let html_str = '';
+    Object.keys(groups).forEach(id => {
+      const items = groups[id];
+      // Try to get parent section title
+      let sectionTitle = id.replace(/-/g, ' ').replace(/^\w/, c => c.toUpperCase());
+      const headingEl = document.querySelector('#' + CSS.escape(id) + ' h2, #' + CSS.escape(id) + ' h3, #' + CSS.escape(id) + ' h4');
+      if (headingEl) sectionTitle = headingEl.textContent.replace(/^\s*\d+\.\s*/, '').trim();
+      html_str += '<div class="search-results-section">' + escapeHtml(sectionTitle) + '</div>';
+      items.slice(0, 3).forEach(item => {
+        const title = highlight(escapeHtml(item.heading), q);
+        const snippet = highlight(escapeHtml(item.snippet.slice(0, 140) + (item.snippet.length > 140 ? '…' : '')), q);
+        html_str += '<a class="search-result-item" href="#' + item.id + '" data-id="' + item.id + '">' +
+          '<div class="search-result-title">' + title + '</div>' +
+          '<div class="search-result-snippet">' + snippet + '</div>' +
+        '</a>';
+      });
+    });
+
+    searchResults.innerHTML = html_str;
+    searchResults.classList.add('open');
+
+    // Wire up clicks
+    searchResults.querySelectorAll('.search-result-item').forEach(a => {
+      a.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const id = a.getAttribute('data-id');
+        jumpToSection(id);
+        searchInput.value = '';
+        searchResults.classList.remove('open');
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function jumpToSection(id) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.classList.add('search-target-highlight');
+    setTimeout(() => target.classList.remove('search-target-highlight'), 2000);
+    // Update URL hash without jumping again
+    history.pushState(null, '', '#' + id);
+  }
+
+  let debounceTimer;
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => doSearch(e.target.value), 120);
+  });
+
+  searchInput.addEventListener('focus', () => {
+    if (searchInput.value.trim()) doSearch(searchInput.value);
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      searchInput.value = '';
+      searchResults.classList.remove('open');
+      searchInput.blur();
+    } else if (e.key === 'Enter') {
+      const first = searchResults.querySelector('.search-result-item');
+      if (first) first.dispatchEvent(new MouseEvent('mousedown'));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const items = searchResults.querySelectorAll('.search-result-item');
+      const cur = searchResults.querySelector('.search-result-item.active');
+      let idx = cur ? Array.from(items).indexOf(cur) : -1;
+      if (cur) cur.classList.remove('active');
+      idx = Math.min(idx + 1, items.length - 1);
+      if (items[idx]) { items[idx].classList.add('active'); items[idx].scrollIntoView({ block: 'nearest' }); }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const items = searchResults.querySelectorAll('.search-result-item');
+      const cur = searchResults.querySelector('.search-result-item.active');
+      let idx = cur ? Array.from(items).indexOf(cur) : 0;
+      if (cur) cur.classList.remove('active');
+      idx = Math.max(idx - 1, 0);
+      if (items[idx]) { items[idx].classList.add('active'); items[idx].scrollIntoView({ block: 'nearest' }); }
+    }
+  });
+
+  // Close search on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrap')) {
+      searchResults.classList.remove('open');
+    }
+  });
+
+  // Keyboard shortcut: "/" to focus search, "g g" scroll top, etc.
+  document.addEventListener('keydown', (e) => {
+    // "/" focuses search (unless already in input)
+    if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/i.test(document.activeElement.tagName)) {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    }
+    // Ctrl+K / Cmd+K
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    }
+    // Escape closes search if open, otherwise does nothing
+    if (e.key === 'Escape' && searchResults.classList.contains('open')) {
+      searchResults.classList.remove('open');
+    }
+  });
+
+  // ============ TOC SIDEBAR FILTER (live) ============
+  // When typing in search, also filter sidebar entries for quick visual scan
+  searchInput.addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    document.querySelectorAll('.sidebar .toc-link[data-section]').forEach(link => {
+      if (!q) {
+        link.classList.remove('hidden');
+        return;
+      }
+      const text = link.textContent.toLowerCase();
+      const id = link.getAttribute('data-section').toLowerCase();
+      link.classList.toggle('hidden', !(text.includes(q) || id.includes(q)));
+    });
+  });
+
+  // ============ HIDE TAB CONTENTS (placeholder behavior) ============
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

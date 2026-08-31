@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mallik ERP — XAMPP to Nginx Migration — ArchWiki</title>
+  <title>Mallik ERP — XAMPP to Nginx Migration</title>
   <meta name="description" content="Complete technical migration guide: XAMPP Apache + PHP bundle to a robust Nginx reverse proxy with Node.js / PKG executable, native MariaDB, and Memurai Redis." />
   <style>
     /* ============================================================
-       ArchWiki-inspired stylesheet
+       Documentation site stylesheet
        Light + Dark themes via data-theme attribute on <html>
        ============================================================ */
     :root[data-theme="light"] {
@@ -964,7 +964,7 @@
 
     <a href="#top" class="brand">
       <div class="brand-logo">M</div>
-      <span>ArchWiki</span>
+      <span>Mallik Docs</span>
       <span class="brand-divider">/</span>
       <span class="brand-page">Mallik ERP — XAMPP to Nginx Migration</span>
     </a>
@@ -1065,7 +1065,7 @@
     <div class="page-header">
       <h1 class="page-title">Mallik ERP — XAMPP to Nginx Migration</h1>
       <div class="page-meta">
-        <span><strong>From</strong> ArchWiki — Mallik ERP</span>
+        <span><strong>From</strong> Mallik ERP — Infrastructure Docs</span>
         <span><strong>Last revision:</strong> 2026-08-31</span>
         <span><strong>Status:</strong> <span class="status-badge done">Verified &amp; Operational</span></span>
         <span><strong>Difficulty:</strong> Intermediate → Advanced</span>
@@ -2559,9 +2559,9 @@ save ""                        <span class="c-comment"># disable RDB persistence
     <section id="see-also" class="section-wrap">
       <h2>See also</h2>
       <ul>
-        <li><a href="https://wiki.archlinux.org/title/Nginx" target="_blank" rel="noopener">ArchWiki — Nginx</a> — upstream Nginx configuration reference</li>
-        <li><a href="https://wiki.archlinux.org/title/MariaDB" target="_blank" rel="noopener">ArchWiki — MariaDB</a> — database setup and tuning</li>
-        <li><a href="https://wiki.archlinux.org/title/Redis" target="_blank" rel="noopener">ArchWiki — Redis</a> — cache service configuration</li>
+        <li><a href="https://nginx.org/en/docs/" target="_blank" rel="noopener">Nginx documentation</a> — upstream configuration reference</li>
+        <li><a href="https://mariadb.com/kb/en/documentation/" target="_blank" rel="noopener">MariaDB documentation</a> — database setup and tuning</li>
+        <li><a href="https://redis.io/docs/" target="_blank" rel="noopener">Redis documentation</a> — cache service configuration</li>
         <li><a href="https://nginx.org/en/docs/http/ngx_http_proxy_module.html" target="_blank" rel="noopener">Nginx proxy module documentation</a> — official reference for <code>proxy_pass</code> and related directives</li>
         <li><a href="https://github.com/vercel/pkg" target="_blank" rel="noopener"><code>pkg</code> on GitHub</a> — Node.js → executable compiler</li>
         <li><a href="https://github.com/yao-pkg/pkg" target="_blank" rel="noopener"><code>@yao-pkg/pkg</code></a> — community fork with Node 20+ support</li>
@@ -2595,9 +2595,9 @@ save ""                        <span class="c-comment"># disable RDB persistence
     <div class="related-box">
       <h6>Related articles</h6>
       <ul>
-        <li><a href="https://wiki.archlinux.org/title/Nginx" target="_blank" rel="noopener">Nginx</a></li>
-        <li><a href="https://wiki.archlinux.org/title/MariaDB" target="_blank" rel="noopener">MariaDB</a></li>
-        <li><a href="https://wiki.archlinux.org/title/Redis" target="_blank" rel="noopener">Redis</a></li>
+        <li><a href="https://nginx.org/en/docs/" target="_blank" rel="noopener">Nginx</a></li>
+        <li><a href="https://mariadb.com/kb/en/documentation/" target="_blank" rel="noopener">MariaDB</a></li>
+        <li><a href="https://redis.io/docs/" target="_blank" rel="noopener">Redis</a></li>
         <li><a href="https://nginx.org/en/docs/http/ngx_http_proxy_module.html" target="_blank" rel="noopener">Nginx proxy module</a></li>
         <li><a href="https://github.com/vercel/pkg" target="_blank" rel="noopener">pkg (Node → exe)</a></li>
       </ul>
@@ -2613,7 +2613,7 @@ save ""                        <span class="c-comment"># disable RDB persistence
       Content is available under <a href="#">CC BY-SA 4.0</a> unless otherwise noted.
     </div>
     <div>
-      <a href="#">Privacy policy</a> · <a href="#">About ArchWiki</a> · <a href="#">Disclaimers</a>
+      <a href="#">Privacy policy</a> · <a href="#">About</a> · <a href="#">Disclaimers</a>
     </div>
   </div>
 </footer>
@@ -2634,7 +2634,7 @@ save ""                        <span class="c-comment"># disable RDB persistence
   const iconDark  = document.getElementById('icon-dark');
 
   const saved = (function(){
-    try { return localStorage.getItem('archwiki-theme'); } catch(e){ return null; }
+    try { return localStorage.getItem('mallik-theme'); } catch(e){ return null; }
   })();
   if (saved) setTheme(saved);
   else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
@@ -2643,7 +2643,7 @@ save ""                        <span class="c-comment"># disable RDB persistence
     html.setAttribute('data-theme', t);
     if (t === 'dark') { iconLight.style.display='none'; iconDark.style.display='block'; }
     else { iconLight.style.display='block'; iconDark.style.display='none'; }
-    try { localStorage.setItem('archwiki-theme', t); } catch(e){}
+    try { localStorage.setItem('mallik-theme', t); } catch(e){}
   }
   themeToggle.addEventListener('click', () => {
     setTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
